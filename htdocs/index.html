@@ -1,0 +1,267 @@
+<!DOCTYPE HTML>
+<!--
+	Dopetrope by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0ZJ67JQPFE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0ZJ67JQPFE');
+</script>
+
+		<title>learn with l11n | tutorials</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="/assets/css/main.css" />
+		<link rel="icon" href="/favicon.ico">
+	</head>
+	<body class="homepage is-preload">
+
+		<div id="page-wrapper">
+
+			<!-- Header -->
+				<section id="header">
+					<!-- Logo -->
+						<h1>Learn with Lester Martin (l11n)</h1>
+					<!-- Nav -->
+						<nav id="nav">
+							<ul>
+								<li class="current"><a href="/index.html">Tutorials</a></li>
+								<li>
+									<a href="/learningpaths/index.html">Learning paths</a>
+									<ul>
+										<li><a href="/learningpaths/lake.html">Data lakes and SQL</a></li>
+										<li><a href="/learningpaths/nifi.html">Apache NiFi development</a></li>
+									</ul>
+								</li>
+								<li><a href="https://lestermartin.blog/" target="_blank">Blog</a></li>
+							</ul>
+						</nav>
+				</section>
+
+			<!-- Main -->
+				<section id="main">
+					<div class="container">
+					
+						<form>
+						<select name="cat-names" id="cat-names" onchange="showByCat(this)">     
+							<option value="SHOW-ALL">Filter Tutorials by Category</option>
+							<option value="SHOW-ALL">Show ALL</option>
+						    <option value="Admin">Admin</option>
+						    <option value="Developer">Developer</option>
+    						<option value="Python">Python</option>
+						    <option value="NiFi">NiFi</option>
+						    <option value="AWS">AWS</option>
+						</select>
+						</form>
+						<br />
+					
+						<div class="row">
+							<div class="col-12">
+
+								<!-- Tutorials -->
+									<section>
+									
+										<div class="row">
+											
+											<div class="col-4 col-6-medium col-12-small"
+														id='flow-dev-intro' 
+											     		data-cats='Developer,NiFi'>
+												<section class="box">
+													<a href="/tutorials/flow-dev-intro/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>Intro to Apache NiFi flow development</h3></div>
+													</header>
+													<p>Duration: 45 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/flow-dev-intro/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+
+											<div class="col-4 col-6-medium col-12-small"
+														id='ingress-egress-aws-s3' 
+											     		data-cats='Developer,NiFi,AWS'>
+												<section class="box">
+													<a href="/tutorials/ingress-egress-aws-s3/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: NiFi doc ingress/egress with AWS S3</h3></div>
+													</header>
+													<p>Duration: 16 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/ingress-egress-aws-s3/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+
+											<div class="col-4 col-6-medium col-12-small"
+														id='import-export' 
+											     		data-cats='Admin,Developer,NiFi'>
+												<section class="box">
+													<a href="/tutorials/import-export/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: NiFi dataflow import/export</h3></div>
+													</header>
+													<p>Duration: 8 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/import-export/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+											
+											<div class="col-4 col-6-medium col-12-small"
+														id='github-simple' 
+											     		data-cats='Admin,Developer,NiFi'>
+												<section class="box">
+													<a href="/tutorials/github-simple/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: Versioning NiFi flows with GitHub</h3></div>
+													</header>
+													<p>Duration: 15 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/github-simple/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>											
+
+											<div class="col-4 col-6-medium col-12-small"
+														id='upload-nar' 
+											     		data-cats='Admin,Developer,Python,NiFi'>
+												<section class="box">
+													<a href="/tutorials/upload-nar/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: Upload custom NAR files</h3></div>
+													</header>
+													<p>Duration: 13 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/upload-nar/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+											
+											<div class="col-4 col-6-medium col-12-small"
+														id='build-python-transform' 
+											     		data-cats='Developer,Python,NiFi'>
+												<section class="box">
+													<a href="/tutorials/build-python-transform/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: Build a NiFi Python transform processor</h3></div>
+													</header>
+													<p>Duration: 28 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/build-python-transform/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+											
+											<div class="col-4 col-6-medium col-12-small"
+														id='python-error-handling' 
+											     		data-cats='Developer,Python,NiFi'>
+												<section class="box">
+													<a href="/tutorials/python-error-handling/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: Error handling in NiFi Python processors</h3></div>
+													</header>
+													<p>Duration: 21 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/python-error-handling/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+											
+											<div class="col-4 col-6-medium col-12-small"
+														id='manage-assets' 
+											     		data-cats='Admin,Developer,NiFi'>
+												<section class="box">
+													<a href="/tutorials/manage-assets/" class="image featured"><img src="/assets/images/tutorial-widget-top.png" alt="" /></a>
+													<header>
+													    <div style="height:3.3em"><h3>WIP/404: Manage assets</h3></div>
+													</header>
+													<p>Duration: 24 mins | Updated: Nov 25, 2024</p>
+													<footer>
+														<ul class="actions">
+															<li><a href="/tutorials/manage-assets/" class="button alt">Start</a></li>
+														</ul>
+													</footer>
+												</section>
+											</div>
+																																	
+										</div>
+									</section>
+
+							</div>
+						</div>
+					</div>
+				</section>
+
+			<!-- Footer -->
+			<section id="footer">
+				<div class="container">
+					<div class="row">
+						<div class="col-7 col-12-medium">
+							<section>
+								<header>
+									<h2><a href="https://lestermartin.blog" target="_blank">lestermartin.blog</a></h2>
+								</header>
+							</section>
+						</div>
+						<div class="col-5 col-12-medium" style="text-align:right">
+							<section>
+								<ul class="social">
+									<li><a class="icon brands fa-github" href="https://github.com/lestermartin" class="label" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a class="icon brands fa-youtube" href="https://www.youtube.com/@LesterMartinATL" class="label" target="_blank"><span class="label">YouTube</span></a></li>
+									<li><a class="icon brands fa-linkedin-in" href="https://www.linkedin.com/in/lestermartin/" target="_blank"><span class="label">LinkedIn</span></a></li>
+									<li><a class="icon brands fa-x-twitter" href="https://x.com/LesterMartinATL" class="label" target="_blank"><span class="label">X</span></a></li>
+									<li><a class="icon solid fa-envelope" href="mailto:lester.martin@gmail.com?subject=LearnWithLester" target="_blank"><span class="label">Email</span></a></li>
+								</ul>
+							</section>
+						</div>
+						<div class="col-12">
+
+							<!-- Copyright -->
+								<div id="copyright">
+									<ul class="links">
+										<li>&copy; <a href="https://lestermartin.blog/about" target="_blank">Lester Martin</a>. All rights reserved.</li><li>Design: <a href="http://html5up.net" target="_blank">HTML5 UP</a></li>
+									</ul>
+								</div>
+
+						</div>
+					</div>
+				</div>
+			</section>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="/assets/js/jquery.min.js"></script>
+			<script src="/assets/js/jquery.dropotron.min.js"></script>
+			<script src="/assets/js/browser.min.js"></script>
+			<script src="/assets/js/breakpoints.min.js"></script>
+			<script src="/assets/js/util.js"></script>
+			<script src="/assets/js/main.js"></script>
+			<script src="/assets/js/tutorial-cats.js"></script>
+
+	</body>
+</html>

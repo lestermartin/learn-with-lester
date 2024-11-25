@@ -1,0 +1,528 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid="G-0ZJ67JQPFE"
+                  codelab-ga4id=""
+                  id="flow-dev-intro"
+                  title=""
+                  environment="web"
+                  feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_flow-dev-intro">
+    
+      <google-codelab-step label="Tutorial overview" duration="1">
+        <p><strong>Last Updated:</strong> 2024–11-25</p>
+<p class="image-container"><img style="width: 613.50px" src="img/8b9009608f34b1a7.png"></p>
+<h2 is-upgraded><strong>Background</strong></h2>
+<p>This <strong>Intro to Apache NiFi flow development</strong> tutorial assumes you are new to <a href="https://nifi.apache.org/" target="_blank">Apache NiFi,</a> or at least new to developing a dataflow with it. NiFi is an easy to use, powerful, and reliable system to process and distribute data. To be successful with NiFi, it is important to make sure you understand the fundamentals of working with the flow builder and its component types.</p>
+<h2 is-upgraded><strong>Scope of the tutorial</strong></h2>
+<p>In this tutorial, you will learn about NiFis fundamental building blocks and how to use the UI to assemble a dataflow. You will create a simple, but functional, pipeline running in NiFi by the end of the tutorial.</p>
+<h2 is-upgraded><strong>Learning objectives</strong></h2>
+<p>Once you&#39;ve completed this tutorial, you will be able to:</p>
+<ul>
+<li>Explain the function of the major component types; processors, connections, and FlowFiles.</li>
+<li>Construct a dataflow/pipeline with these components.</li>
+<li>Control the run-time lifecycle of your dataflow.</li>
+<li>Perform simple debugging and interrogation of FlowFiles in your pipeline.</li>
+<li>Utilize product documentation for components.</li>
+</ul>
+<h2 is-upgraded><strong>Prerequisites</strong></h2>
+<ul>
+<li>Meet the NiFi <a href="https://nifi.apache.org/nifi-docs/administration-guide.html#system_requirements" target="_blank">System Requirements</a> for installation or have access to an existing NiFi runtime.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prepare the environment" duration="6">
+        <aside class="special"><p><strong>Note:</strong> Skip down to the <strong>Create a Process Group</strong> section of this step if you will be using an existing NiFi runtime at version 2.0.0 or greater that you have access to.</p>
+</aside>
+<h2 is-upgraded><strong>Download NiFi</strong></h2>
+<p>Visit <a href="https://nifi.apache.org/download/" target="_blank">https://nifi.apache.org/download/</a> and under the <strong>NIFI</strong> tab click on the <strong>NiFi Standard 2.x.x</strong> button under the <strong>Binaries</strong> heading.</p>
+<p class="image-container"><img style="width: 542.85px" src="img/b5dc946d019ae961.png"></p>
+<p>Use the link at the top of the Apache Software Foundation (ASF) page that surfaces to download a zip file of a precompiled version of NiFi.</p>
+<p class="image-container"><img style="width: 457.50px" src="img/9f970fdcbf8bf94f.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> While this tutorial does not repeat them, it is advisable to follow the <strong>VERIFY THE INTEGRITY OF THE FILES </strong>instructions just below the download link options.</p>
+</aside>
+<h2 is-upgraded><strong>Unzip the file</strong></h2>
+<p><em>Using your workstation tools, </em>move the downloaded zip file to a directory of your choosing and then unzip it.</p>
+<p class="image-container"><img style="width: 679.50px" src="img/ee5e985865b37e2c.png"></p>
+<p><em>Using your workstation tools,</em> find the <code>/bin</code> directory in file structure you unzipped.</p>
+<p class="image-container"><img style="width: 675.75px" src="img/4c61c2910f16fa0c.png"></p>
+<h2 is-upgraded><strong>Start NiFi</strong></h2>
+<p><em>Using your workstation tools, </em>navigate into the <code>/bin</code> directory and execute <code>nifi.sh</code> or <code>nifi.cmd</code> (based on your workstation) followed by <code>run</code>.</p>
+<aside class="special"><p><strong>Note:</strong> Visit <a href="https://nifi.apache.org/nifi-docs/administration-guide.html#how-to-install-and-start-nifi" target="_blank">How to install and start NiFi</a> for a definition of the <code>start</code>, <code>stop</code>, <code>status</code>, and <code>run</code> command options.</p>
+</aside>
+<p class="image-container"><img style="width: 686.50px" src="img/729e16432d703b33.png"></p>
+<p>You will see something similar to the following which indicates it started.</p>
+<p class="image-container"><img style="width: 691.25px" src="img/c445c793c8b2600b.png"></p>
+<p><em>Using your workstation tools, </em>search <code>/logs/nifi-app.log</code> for lines that start with <code>Generated</code>.</p>
+<p class="image-container"><img style="width: 688.50px" src="img/6fe36d9379c0089a.png"></p>
+<p>Capture those two values as they are the generated username and password for your instance of NiFi and will be needed to access the UI.</p>
+<aside class="special"><p><strong>Note: </strong><a href="https://nifi.apache.org/nifi-docs/getting-started.html#i-started-nifi-now-what" target="_blank">Started NiFi. Now What?</a> provides instructions on how to change the username and password if so desired.</p>
+</aside>
+<h2 is-upgraded><strong>Access the UI</strong></h2>
+<p>Open a web browser and navigate to <a href="https://localhost:8443/nifi" target="_blank">https://localhost:8443/nifi</a> and after accepting the self-signed certificate you will see the login screen.</p>
+<p class="image-container"><img style="width: 318.50px" src="img/4b2fcc16e3a7305b.png"></p>
+<p>Enter your <strong>Username</strong> and <strong>Password</strong> then click on <strong>Log in</strong> to find a blank <strong>canvas</strong>.</p>
+<p class="image-container"><img style="width: 659.50px" src="img/98ad303f044a80ec.png"></p>
+<h2 is-upgraded><strong>Create a Process Group</strong></h2>
+<p>Drag and drop the fourth icon, <strong>Process Group</strong>, from the <strong>tool palette</strong> at the top of the page onto the <strong>canvas</strong>.</p>
+<p class="image-container"><img style="width: 609.50px" src="img/3dc5aa93b7c5b9fb.png"></p>
+<p>Once you release your pointer, a <strong>Create Process Group</strong> pop-up will appear. Add a <strong>Name</strong> and click <strong>Add</strong>.</p>
+<p class="image-container"><img style="width: 376.50px" src="img/bfb14c8a394e9e8.png"></p>
+<p>Right click on the new <strong>Process Group</strong> and select <strong>Enter Group</strong> on the contextual menu (or just double click on the <strong>Process Group</strong>).</p>
+<p class="image-container"><img style="width: 425.87px" src="img/52a94cfa5d37311e.png"></p>
+<p>You have created a visual abstraction away from the top-level of the <strong>canvas</strong> which will allow us to focus on just this tutorial.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Review the use case" duration="2">
+        <h2 is-upgraded><strong>ETL pipeline</strong></h2>
+<p>This initial pipeline will ingest zip files and process the contents of them following the generally understood Extract - Transform - Load (ETL) pattern and perform the following logic.</p>
+<h3 is-upgraded><strong>Extract</strong></h3>
+<p>The first step of the dataflow is to periodically poll an ingest location for files. Zip files are anticipated that will contain text files. Only process each new file once.</p>
+<aside class="special"><p><strong>Note:</strong> You will test out the pipeline with a<a href="https://github.com/lestermartin/events/raw/refs/heads/main/WillShakespeare.zip" target="_blank"> zip file</a> that contains the works of William Shakespeare.</p>
+</aside>
+<h3 is-upgraded><strong>Transform</strong></h3>
+<p>The dataflow will unzip each ingested file to individually process each included file – it will filter out any non-text files for additional investigation.</p>
+<p>For the text files, classify them as one of the following sizes based on their content&#39;s byte count.</p>
+<ul>
+<li><code>small</code> – when file size is &lt;= 75 KB</li>
+<li><code>medium</code> – files &gt; 75 KB and &lt;= 150 KB</li>
+<li><code>large</code> – any file &gt; 150 KB</li>
+</ul>
+<h3 is-upgraded><strong>Load</strong></h3>
+<p>The unzipped text files should be persisted to subfolders aligned with the content size classifications within the egress destination&#39;s parent folder.</p>
+<h2 is-upgraded><strong>Set up mock extract &amp; load locations</strong></h2>
+<p>NiFi ships with components that tackle reading from &amp; writing from a wide variety of databases, object stores, search engines, message platforms, commercial systems, and more. To simplify this tutorial, you will use mock locations on the file system that NiFi is deployed on to extract files from, and to load the end results of the pipeline, to.</p>
+<p>Create a <code>/mocks</code> folder somewhere on your file system and then create the following subfolders.</p>
+<p class="image-container"><img style="width: 678.50px" src="img/484de6f378ac03ef.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Understand NiFi concepts" duration="8">
+        <h2 is-upgraded><strong>Definitions</strong></h2>
+<p>The <a href="https://nifi.apache.org/nifi-docs/overview.html" target="_blank">Apache NiFi Overview</a> simply states, &#34;NiFi was built to automate the flow of data between systems.&#34; This same document identifies these fundamental concepts.</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>FlowFile</strong></p>
+</td><td colspan="1" rowspan="1"><p>A FlowFile represents each object moving through the system and for each one, NiFi keeps track of a map of key/value pair attribute strings and its associated content of zero or more bytes.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Processor</strong></p>
+</td><td colspan="1" rowspan="1"><p>Processors actually perform the work including activities such as data routing, transformation, or mediation between systems. Processors can operate on zero or more FlowFiles in a given unit of work.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Connection</strong></p>
+</td><td colspan="1" rowspan="1"><p>Connections provide the actual linkage between processors. These act as queues and allow various processes to interact.</p>
+</td></tr>
+</table>
+<aside class="special"><p><strong>Note:</strong> The <a href="https://nifi.apache.org/components/" target="_blank">Documentation</a> site is the definitive source for NiFi concepts, components, and interactions. The most useful sections are the first 4 listed in the <strong>General</strong> section.</p>
+<p class="image-container"><img style="width: 312.00px" src="img/732ffe734acdbd64.png"></p>
+</aside>
+<h2 is-upgraded><strong>In action</strong></h2>
+<p>Let&#39;s understand by doing. Return to your empty canvas.</p>
+<h3 is-upgraded><strong>Add a processor</strong></h3>
+<p>Hover your pointer over the first tool in the palette to see the <strong>Processor</strong> tooltip that surfaces.</p>
+<p class="image-container"><img style="width: 311.50px" src="img/f204b947c8560858.png"></p>
+<p>Click on the <strong>Processor</strong> tool, drag it onto the canvas, and release your click. This will surface an <strong>Add Processor</strong> pop-up window. Type <code>listfile</code> in the <strong>Filter types</strong> search box in the upper right corner of this pop-up window, select <strong>ListFile</strong> in the updated list, and then click the <strong>Add</strong> link in the lower right corner.</p>
+<p class="image-container"><img style="width: 582.85px" src="img/5c3548035dbeab35.png"></p>
+<p>This processor addresses half of the solution to fulfill our Extract requirements. The canvas will now have this processor on it.</p>
+<p class="image-container"><img style="width: 604.84px" src="img/d99b539eadc142db.png"></p>
+<h3 is-upgraded><strong>Configure the processor</strong></h3>
+<p>Right click on the <strong>ListFile</strong> processor on your canvas to see a contextual menu and select <strong>View Documentation</strong>.</p>
+<p class="image-container"><img style="width: 473.94px" src="img/a16d168d81934fd4.png"></p>
+<p>You should now see the documentation page for this processor type. The <strong>Description</strong> initially states that it &#34;retrieves a listing of files from the input directory&#34;. It further identifies a property named <strong>Input Directory</strong>. Find that required property in the <strong>Properties</strong> list of the documentation.</p>
+<p class="image-container"><img style="width: 686.89px" src="img/1af76ce7091f5e7c.png"></p>
+<p>Click on <strong>Back to Processor</strong> link in the upper left corner to return to the canvas.</p>
+<p class="image-container"><img style="width: 310.66px" src="img/8db6ac85c2cb0c5e.png"></p>
+<p>Double click on the processor to enter the <strong>Edit Processor</strong> pop-up window, select the <strong>Properties</strong> tab, and update the empty <strong>Input Directory</strong> value to the full path name of the <code>/mocks/ingest</code> folder you created earlier.</p>
+<p class="image-container"><img style="width: 674.50px" src="img/b3c5a0263854c247.png"></p>
+<p>Before clicking on <strong>Apply</strong>, consider reviewing some other notable properties (that do NOT need to be modified) such as <strong>Listing Strategy</strong>, <strong>Recurse Subdirectories</strong>, and <strong>File Filter</strong>. Consult this processor&#39;s documentation if you require additional understanding on what their default settings indicate.</p>
+<h3 is-upgraded><strong>Add a second processor</strong></h3>
+<p>NiFi leverages a <em>list &gt; fetch pattern</em> with processors when retrieving contents from file and object stores. A deeper discussion is beyond the scope of this initial tutorial, but this two processor pattern is primarily used to aid in scalability. </p>
+<p>As before, add another processor to the canvas. Type <code>FetchFile</code> in the <strong>Filter types</strong> search box and select the <strong>Type</strong> with the same name. Arrange the second processor below the original one.  </p>
+<h3 is-upgraded><strong>Create a connection</strong></h3>
+<p>Hover over the initial <strong>ListFile</strong> processor to notice a circle with an arrow inside that appears in the middle of the processor.</p>
+<p class="image-container"><img style="width: 377.50px" src="img/51bad978a2cbd4f1.png"></p>
+<p>Click on the circle with the arrow inside and drag the pointer towards the bottom processor. It will initially create a <strong>red dotted line</strong> which indicates it is ready to make a connection.</p>
+<p class="image-container"><img style="width: 403.50px" src="img/319069f078b30a19.png"></p>
+<p>Once the pointer is over the second processor, the dotted line will turn <strong>green</strong> and a <strong>green border</strong> will appear around the processor the connection is being made to.</p>
+<p class="image-container"><img style="width: 395.21px" src="img/89d6b3769645eab0.png"></p>
+<p>Release the mouse to see the <strong>Create Connection</strong> pop-up window indicating the <strong>From Processor</strong> and <strong>To Processor</strong> names. Notice the <strong>success</strong> box under <strong>Relationships</strong> is already checked and then click on <strong>Add</strong> to create the connection.</p>
+<p class="image-container"><img style="width: 527.50px" src="img/201d79ecfce49939.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> Nothing would be preselected if there was more than one checkbox under <strong>Relationships</strong>.</p>
+</aside>
+<h3 is-upgraded><strong>Add more processors</strong></h3>
+<p>Since we are expecting zip files to be retrieved by the initial processor pair, add additional processors to determine the MIME type of the file retrieved and then to unzip those files. Add <strong>IdentifyMimeType</strong> and <strong>UnpackContent</strong> processors to the canvas and create connections for the <strong>Relationship</strong> named <strong>success</strong> from each.</p>
+<p>Your flow should look similar to the one below. It should now have three connections in your flow. Each of these is backed by a queue of FlowFiles that houses them until the next processor receives them. These queues are empty right now as we have not started any processing yet. </p>
+<p class="image-container"><img style="width: 390.76px" src="img/168335d553a21bc5.png"></p>
+<h2 is-upgraded><strong>Relationships?</strong></h2>
+<p>We will be discussing what a &#34;relationship&#34; is more fully in a future step of this tutorial, but at its simplest a relationship is the opportunity to create a connection between processors. That means data in the system flows through them. The following table is from the <strong>FetchFile</strong> documentation and acts as an example of what we are discussing.</p>
+<p class="image-container"><img style="width: 618.50px" src="img/f3ebf88f42a06902.png"></p>
+<p>You already made a connection for the <strong>success</strong> relationship between <strong>FetchFile</strong> and <strong>IdentifyMimeType</strong>. To allow us to begin executing the <strong>FetchFile</strong> processor, we need to either make connections to each of the remaining relationships OR we can &#34;auto-terminate&#34; them. That would mean that we chose to not see any data flowing down any of those particular relationships.</p>
+<p>Open the <strong>Edit Processor</strong> configuration window for the <strong>FetchFile</strong> processor and navigate to the <strong>Relationships</strong> tab. Check the <strong>terminate</strong> box for the <strong>failure</strong>, <strong>not.found</strong>, and <strong>permission.denied</strong> relationships. Click <strong>Apply</strong> to return to the canvas.</p>
+<p class="image-container"><img style="width: 646.50px" src="img/964dd48930ecb3ba.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Start the pipeline" duration="6">
+        <h2 is-upgraded><strong>Not just dev-time</strong></h2>
+<p>By this point, it might not be evident that the NiFi UI melds dev-time and run-time into a live &amp; interactive experience. You can initialize processing in the same UI as you have already been defining your data pipeline in.</p>
+<p>In fact, each processor can be started (and stopped) individually from every other one. The component status bar is showing us, via the <strong>red square icon</strong>, that we have three processors in a stopped mode. It also shows us we have another processor that is invalid (the <strong>yellow triangle</strong>). </p>
+<p class="image-container"><img style="width: 537.50px" src="img/995a10b4fa83d00e.png"></p>
+<p>This status bar details the status of the whole canvas which only contains the four processors we have added so far. You can see these status indicators on the processors themselves.</p>
+<p class="image-container"><img style="width: 387.89px" src="img/e27b0ecb6ef2b4ce.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> If your <strong>FetchFile</strong> processor is still showing a <strong>yellow triangle</strong>, then it is still invalid. Hover over the <strong>yellow triangle</strong> to see a tooltip declaring what is still invalid.</p>
+<p class="image-container"><img style="width: 1232.00px" src="img/6d9db5b9cb726210.png"></p>
+<p>The example above shows that multiple relationships are the concern. If you encounter this problem, refer back to the end of the prior step and auto-terminate the identified relationships.</p>
+</aside>
+<h2 is-upgraded><strong>Begin processing</strong></h2>
+<p><em>Using your workstation tools, </em>copy the <a href="https://github.com/lestermartin/events/raw/refs/heads/main/WillShakespeare.zip" target="_blank">zip file</a> discussed earlier in this tutorial into the <code>/mocks/ingest</code> folder. </p>
+<p class="image-container"><img style="width: 674.50px" src="img/534cd17e33667f6e.png"></p>
+<p>Let&#39;s start the initial <strong>ListFile</strong> processor whose job it is to go to the configured directory and get the name(s) of any files present. Right click on the processor and choose <strong>Start</strong> on the context menu that surfaces.</p>
+<p class="image-container"><img style="width: 465.50px" src="img/7ea20fee2bbd0e9.png"></p>
+<h2 is-upgraded><strong>Identify FlowFiles</strong></h2>
+<p>You will notice that the <strong>ListFile</strong> processor is displayed as running and is reporting in the processor&#39;s <strong>Out</strong> metric that it has emitted 1 FlowFile of 0 bytes in size. That same FlowFile is now in the queue that backs the connection named <strong>success</strong> leaving this processor.</p>
+<p class="image-container"><img style="width: 457.50px" src="img/a0dbd972d6faf4c6.png"></p>
+<p>It is queued because the connection is going to a processor that is not running yet.</p>
+<aside class="special"><p><strong>Note:</strong> Right click on an empty area of the canvas for a contextual menu whose first item is <strong>Refresh</strong> and includes a keyboard shortcut. This can be used as needed instead of waiting for the canvas to refresh metrics on its own.</p>
+<p class="image-container"><img style="width: 229.33px" src="img/75af9a972a28ee2c.png"></p>
+</aside>
+<p>As a reminder, a FlowFile is like an envelope that contains a reference to the actual binary data that makes up the object flowing through the data pipeline (in this scenario, there is no actual binary file present as this processor creates FlowFile that simply identify a file that needs to be retrieved) AND attributes about the object. Here are a few of the attributes that will be present.</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>filename</strong></p>
+</td><td colspan="1" rowspan="1"><p>A filename that can be used to store the data to a local or remote file system.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>uuid</strong></p>
+</td><td colspan="1" rowspan="1"><p>A Universally Unique Identifier that distinguishes the FlowFile from other FlowFiles in the system.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>fileSize</strong></p>
+</td><td colspan="1" rowspan="1"><p>The number of bytes taken up by the FlowFile&#39;s content.</p>
+</td></tr>
+</table>
+<p>Right click on the <strong>success</strong> connection&#39;s queue and click on <strong>List Queue</strong> from the context menu.</p>
+<p class="image-container"><img style="width: 415.50px" src="img/dcb5f9533e980ec2.png"></p>
+<p>You will now see the single FlowFile listed that was retrieved by the <strong>ListFile</strong> processor.</p>
+<p class="image-container"><img style="width: 674.50px" src="img/3ce8b1077fe4d396.png"></p>
+<h2 is-upgraded><strong>View attributes</strong></h2>
+<p>Click on the <strong>vertical ellipsis</strong> to the far right of the entry and select <strong>View Details</strong>.</p>
+<p class="image-container"><img style="width: 322.50px" src="img/aa0159e1c9a26030.png"></p>
+<p>You will see the <strong>Details</strong> tab of the <strong>FlowFile </strong>pop-up window. The initial information under the <strong>FlowFile Details</strong> heading references the 3 attributes previously mentioned; <strong>filename</strong>, <strong>fileSize</strong>, and <strong>uuid</strong>. It also shows that this FlowFile has no additional binary content <em>– you will retrieve the zip file shortly</em>. </p>
+<p class="image-container"><img style="width: 617.21px" src="img/8a5482fcfe1262ea.png"></p>
+<p>Click on the <strong>Attributes</strong> tab and verify the fully qualified location of your <code>/mocks/ingest</code> folder is present.</p>
+<p class="image-container"><img style="width: 290.50px" src="img/3a3135d7d518e211.png"></p>
+<p>Click on <strong>Ok</strong> to close the FlowFile pop-up window and then click on <strong>Back to Connection</strong> in the upper left corner of the UI to return to the canvas.</p>
+<h2 is-upgraded><strong>Fetch the file</strong></h2>
+<p>Start the <strong>FetchFile</strong> processor and notice the connection before it is now empty and the one coming out of it now has a FlowFile; this time with 2.14 MB of content. You can also see this in the <strong>In</strong> and <strong>Out</strong> metrics of the processor.</p>
+<p class="image-container"><img style="width: 377.50px" src="img/89c8bc5839db6add.png"></p>
+<p><strong>List Queue</strong> on the connection and then <strong>View Details</strong> on the FlowFile. Notice that there is information present under the <strong>Content Claim</strong> this time. Click <strong>Download</strong> which will download another copy of the zip file to your workstation.</p>
+<p class="image-container"><img style="width: 592.50px" src="img/246dff82072ce97d.png"></p>
+<h2 is-upgraded><strong>View content</strong></h2>
+<p><em>Using your workstation tools, </em>verify there are 43 files inside the unzipped folder.</p>
+<p class="image-container"><img style="width: 685.96px" src="img/1f71fe987caf2e8e.png"></p>
+<p>Optionally, explore the files in the unzipped folder.</p>
+<h2 is-upgraded><strong>Passing by reference</strong></h2>
+<p>Start the <strong>IdentifyMimeType</strong> processor and notice the connection before it is now empty and the one coming out of it now has a FlowFile with the same 2.14 MB of content. Chaining these processors together may seem inefficient, but understand that the FlowFile itself is an object inside a JVM that is being passed by reference. The same is true for the underlying content that the FlowFile refers to. </p>
+<p class="image-container"><img style="width: 379.50px" src="img/84bda3daf770731a.png"></p>
+<p>The <strong>In</strong> and <strong>Out</strong> metrics of the processor show one of the ways in which this run-time perspective also provides monitoring metrics. All within the same UI where dev-time activities occur.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Unzip the file" duration="6">
+        <p>The next step in the dataflow is to unzip the file that the FlowFile is tied to using the <strong>UnpackContent</strong> processor we added earlier.</p>
+<h2 is-upgraded><strong>Relationships</strong></h2>
+<p>It might seem logical to just &#34;start&#34; the <strong>UnpackContent</strong> processor now, but if you right click on it you will notice there is no option to do so. This is because it is marked as invalid – notice the <strong>yellow triangle</strong> next to its name. Hover over that icon and the issues that make it invalid will surface in a tooltip.</p>
+<p class="image-container"><img style="width: 606.50px" src="img/a94f647b65f0b163.png"></p>
+<p>All 3 of these problems are essentially the same. They are stating that various &#34;relationships&#34; are invalid because they are &#34;not connected to any component&#34; or &#34;not auto-terminated&#34;.</p>
+<p>Here are the descriptions of the <strong>Relationships</strong> from the <strong>UnpackContent</strong> processor documentation. Reminder; right click on the processor and select <strong>View Documentation</strong>.</p>
+<p class="image-container"><img style="width: 573.50px" src="img/99288ebbdb886ec.png"></p>
+<p>As explained before, these &#34;relationships&#34; are basically the streams of information that a processor can emit FlowFiles into.  All processors produce at least one relationship. Double click on the processor to pull up the <strong>Edit Processor</strong> pop-up and select the <strong>Relationships</strong> tab to see the list of the 3 relationships the <strong>UnpackContent</strong> processor produces; <strong>failure</strong>, <strong>original</strong>, and <strong>success</strong>. These are the same from the documentation.</p>
+<p class="image-container"><img style="width: 644.50px" src="img/dd3fdc01b1cfb5a.png"></p>
+<aside class="special"><p><strong>Note:</strong> There is no specific requirement for relationship names for a given outcome, but the 3 above are very commonly used.</p>
+</aside>
+<p>If the <strong>original</strong> FlowFile was useful in the dataflow for any other purpose, we could create a connection to another processor for that. As we don&#39;t need it, go ahead and auto-terminate it. </p>
+<p>As we are NOT trying to make a very robust solution in this initial example, check the <strong>terminate</strong> box next to the <strong>failure</strong> relationship as well which will ignore any error scenario. </p>
+<p class="image-container"><img style="width: 410.50px" src="img/75b4db6b08ccf237.png"></p>
+<p>After you click on <strong>Apply</strong> and return to the canvas, you should only have a single configuration message being displayed when you hover over the invalid icon.</p>
+<p class="image-container"><img style="width: 612.50px" src="img/55b9c3e5bb4edd08.png"></p>
+<h2 is-upgraded><strong>Connections</strong></h2>
+<p>As we need to have a processor to assign the <strong>success</strong> relationship to AND knowing our use case indicates we only want to process text files, go ahead and add another processor to the canvas. This time select the <strong>RouteOnAttribute</strong> processor type that has the following description.</p>
+<p class="image-container"><img style="width: 550.50px" src="img/5b3bc91adf71c9b1.png"></p>
+<p>Make a connection to this new processor from <strong>UnpackContent</strong> and select the <strong>success</strong> relationship on the <strong>Create Connection</strong> window.</p>
+<p class="image-container"><img style="width: 471.83px" src="img/6201889452dca9f9.png"></p>
+<h2 is-upgraded><strong>Queues</strong></h2>
+<p>The lower part of your pipeline should look similar to this.</p>
+<p class="image-container"><img style="width: 371.52px" src="img/2e83b7efd84651c2.png"></p>
+<p>This shows the original FlowFile with 2.14 MB of content is still in the queue backing the connection coming into <strong>UnpackContent</strong>. </p>
+<h2 is-upgraded><strong>Aren&#39;t they the same thing?</strong></h2>
+<p>It might sound like there are a lot of terms that really mean the same thing, but let&#39;s unpack them right now before we move on.</p>
+<ul>
+<li><em>Relationships</em> are the output paths a FlowFile can be emitted through from a processor</li>
+<li><em>Connections</em> are the coupling of a producing processor&#39;s relationship with a consuming processor</li>
+<li><em>Queues</em> hold the FlowFiles until the consuming processor can perform its action</li>
+</ul>
+<p>Easy-peasy! ;) Well, to make it more fun...</p>
+<ul>
+<li>Every processor produces 1, or more, relationships</li>
+<li>Each relationship can have multiple connections as multiple processors can consume each relationship</li>
+<li>Each connection can be configured to handle more than one relationship</li>
+</ul>
+<p>But, we&#39;ll keep it easy as this is the &#34;intro&#34; tutorial!</p>
+<h2 is-upgraded><strong>Unzip the file</strong></h2>
+<p>Start the <strong>UnpackContent</strong> processor and notice the FlowFiles coming into it will be cleared.</p>
+<p class="image-container"><img style="width: 407.50px" src="img/f33cd161452ea760.png"></p>
+<p>Also notice there are 43 FlowFiles in the queue backing the connection leaving this processor.</p>
+<p>These represent the 43 files we saw earlier that were included in the original zip file. The 5.31 MB is the byte size of all of the unzipped files. Execute the <strong>List Queue</strong> feature and see that all 43 of the files are listed along with their physical filename and size.</p>
+<p class="image-container"><img style="width: 683.50px" src="img/1aaf911bfdd884b4.png"></p>
+<aside class="special"><p><strong>Note:</strong> Due to how your workstation allocates disk space for files, it is likely the file size will be slightly larger than the NiFi UI reports.</p>
+</aside>
+<p>Verify the first few entries in the queue align with the filenames and sizes that you previously unzipped on your workstation.</p>
+<h2 is-upgraded><strong>View content</strong></h2>
+<p>One way to view the contents of the binary data tied to the FlowFile is to click on the <strong>vertical ellipsis</strong> to the far right of the items in the <strong>List Queue</strong> output. From there, click on <strong>View content</strong>.</p>
+<p class="image-container"><img style="width: 267.14px" src="img/5b22bf0c2ebd50d0.png"></p>
+<p>If the binary data is of a content type that NiFi UI can visualize, it will be presented in a new browser tab. Yes, this looks pretty confusing, but it is because NiFi itself is a bit confused. Outside the scope of this initial tutorial is the fact that NiFi has a very sophisticated data lineage model called Data Provenance. </p>
+<p class="image-container"><img style="width: 680.50px" src="img/de1371fe03d4d60d.png"></p>
+<p>The FlowFiles referencing the individual files from the zip archive inherited many attributes from their parent FlowFile. This included the MIME type value.</p>
+<aside class="special"><p><strong>Note:</strong> More information about Data Provenance can be found in the <a href="https://nifi.apache.org/nifi-docs/user-guide.html#data_provenance" target="_blank">NiFi User Guide</a>&#39;s section with the same heading.</p>
+</aside>
+<p>Easy enough to look at this more appropriately by toggling the View pull down to select text.</p>
+<p class="image-container"><img style="width: 683.50px" src="img/87d786d7d31b8662.png"></p>
+<aside class="special"><p><strong>Note:</strong> An additional <strong>IdentifyMimeType</strong> processor after <strong>UnpackContent</strong> would have also resolved this minor inconvenience.</p>
+</aside>
+<p>Close the newly opened browser tab when done reviewing the content.</p>
+<p>The <strong>View</strong> and <strong>Download</strong> options are also available if you select <strong>View Details</strong> from the <strong>vertical ellipsis</strong> via the buttons at the bottom of the <strong>Content Claim</strong> section of the <strong>FlowFile</strong> pop-up window that surfaces.</p>
+<p class="image-container"><img style="width: 523.50px" src="img/6488d356c15fb005.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Make routing decisions" duration="6">
+        <h2 is-upgraded><strong>Routing options</strong></h2>
+<p>With FlowFiles containing a reference to some binary content (such as the files we have been processing) AND attribute key-value pairs, it is easy to imagine that making decisions on how a particular FlowFile is processed could depend on information in the content and/or the attributes.</p>
+<p>For this initial flow we have to make decisions around the type of underlying content (i.e. text file or not) as well as the size of each. At first, that might suggest we need to start making routing decisions based on the binary content itself. Fortunately, there are attributes that already provide us with an easier way to answer these questions.</p>
+<h2 is-upgraded><strong>Route on attribute</strong></h2>
+<p>Let&#39;s review the documentation for the <strong>RouteOnAttribute</strong> processor that is already in our flow.</p>
+<aside class="special"><p><strong>Note:</strong> In addition to retrieving processor documentation within the UI, <a href="https://nifi.apache.org/components/" target="_blank">NiFi Documentation</a> also provides this same information. <a href="https://nifi.apache.org/components/org.apache.nifi.processors.standard.RouteOnAttribute/" target="_blank">RouteOnAttribute - Apache NiFi</a> is a good example of this additional documentation source.</p>
+</aside>
+<p>Pull up the <strong>Edit Processor</strong> window for <strong>RouteOnAttribute</strong> and navigate to the <strong>Relationships</strong> tab. You will see there is only a single relationship present; <strong>unmatched</strong>.</p>
+<p class="image-container"><img style="width: 526.50px" src="img/c0d76edb4ab827d8.png"></p>
+<p>The message below the checkboxes suggests that we can provide some logic of our own to make routing decisions. The documentation confirms this in the <strong>Dynamic Properties</strong> and <strong>Dynamic Relationships</strong> sections. </p>
+<p>Simply stated this means we can add a custom property and set its value to a user-defined expression that returns a boolean response. Any FlowFile that causes the expression to return true will then be routed down a dynamic relationship named after the custom property.</p>
+<p>For our initial routing decision, our requirements tell us to &#34;filter out any non-text file for additional investigation&#34;. Let&#39;s tackle the implementation for this step-by-step.</p>
+<h3 is-upgraded><strong>Determine criteria</strong></h3>
+<p>Back in the <strong>List Queue</strong> screen, click on the <strong>vertical ellipsis</strong> to the far right of one of the FlowFiles and select <strong>View Details</strong>. Navigate to the <strong>Attributes</strong> table and find the <strong>filename</strong> attribute. Notice the file name has an extension. Likely your&#39;s shows <code>.txt</code> as below, but not guaranteed.</p>
+<p class="image-container"><img style="width: 571.50px" src="img/21b15e7b3e8021cb.png"></p>
+<p>Next, we will write an expression that determines if the anticipated file extension is present.</p>
+<h3 is-upgraded><strong>Dynamic property</strong></h3>
+<p>In the <strong>Properties</strong> tab of <strong>Edit Processor</strong> for the <strong>RouteOnAttribute</strong> processor, click on the <strong>+</strong> sign at the top right of the list of properties.</p>
+<p class="image-container"><img style="width: 586.50px" src="img/1a7f5ace240f4e53.png"></p>
+<p>Enter <code>tutorial.isText</code> in the <strong>Property Name</strong> field that surfaces in the <strong>Add Property</strong> pop-up window. </p>
+<p class="image-container"><img style="width: 288.87px" src="img/ac0881da5bdc1e35.png"></p>
+<p>Click <strong>Ok</strong> to save it. </p>
+<h3 is-upgraded><strong>Expression language</strong></h3>
+<p>You will automatically be routed into the property editor for this new dynamic (i.e. custom) property. Enter the following string into the editor.</p>
+<pre><code>${filename:endsWith(&#39;.txt&#39;)}</code></pre>
+<p class="image-container"><img style="width: 621.50px" src="img/f1c4a6cfd6d475a4.png"></p>
+<aside class="special"><p><strong>Note:</strong> Similar expressions are shown in the <strong>Example Use Cases</strong> section of the processor. Furthermore, the syntax for these code-snippets are documented in the<a href="https://nifi.apache.org/nifi-docs/expression-language-guide.html" target="_blank"> Apache NiFi Expression Language Guide</a>. An exhaustive review of this language guide is out of scope of this initial tutorial. When additional expression language code-snippets are needed in this tutorial, they will be provided.</p>
+</aside>
+<p>Click <strong>Ok</strong> to save the expression language and you will then see the new <strong>tutorial.isText</strong> property listed.</p>
+<p class="image-container"><img style="width: 667.50px" src="img/eea44daafed9f96c.png"></p>
+<h3 is-upgraded><strong>Routing strategy</strong></h3>
+<p>Click on the value for the only required property, <strong>Routing Strategy</strong>, and its options are presented in the <strong>Value</strong> pulldown menu. The information in the tooltips that surface also help in explaining the options.</p>
+<p class="image-container"><img style="width: 675.50px" src="img/d2b7cad9d20b37e4.png"></p>
+<p>Leave the <strong>Routing Strategy </strong>property set to <strong>Route to Property name</strong>. This will guarantee that any FlowFile meeting the criteria from the <strong>tutorial.isText</strong> custom property will be routed to a newly created dynamic relationship.</p>
+<h3 is-upgraded><strong>Verify relationships</strong></h3>
+<p>Notice in the <strong>Relationships</strong> tab that we now have a new dynamic relationship called <strong>tutorial.isText</strong> in addition to the existing <strong>unmatched</strong> one.</p>
+<aside class="warning"><p><strong>Caution:</strong> You must save the <strong>Edit Processor</strong> pop-up and then reopen it to see the newly created dynamic relationship.</p>
+</aside>
+<p class="image-container"><img style="width: 486.50px" src="img/206b935714a6b341.png"></p>
+<h3 is-upgraded><strong>Rename the processor</strong></h3>
+<p>To make our dataflow more readable, rename the processor to something more meaningful. In the <strong>Settings</strong> tab, change the <strong>Name</strong> to <code>Verify Text File</code> and be sure to click <strong>Apply</strong> to save all the processor configuration changes you have made.</p>
+<p class="image-container"><img style="width: 229.50px" src="img/32ed82d2caf61205.png"></p>
+<h2 is-upgraded><strong>Resolve the relationships</strong></h2>
+<p>It might sound like we are about to become marriage counselors, but we really just need to address the 2 relationships from the newly renamed <strong>RouteOnAttribute</strong> processor, so let&#39;s make sure we have a visual component for each to be connected to.</p>
+<h3 is-upgraded><strong>Happy path</strong></h3>
+<p>In our requirements, the &#34;happy path&#34; is to continue to process the <code>.txt</code> files. Add an <strong>UpdateAttribute</strong> processor, rename it to <code>Check fileSize</code>, and then create a connection to it from the prior processor&#39;s <strong>tutorial.isText</strong> relationship. Yes, you can do this without any hand holding! It should look like this once you have completed these steps.</p>
+<p class="image-container"><img style="width: 359.00px" src="img/cc58ddf1f027652d.png"></p>
+<h3 is-upgraded><strong>Address errors</strong></h3>
+<p>For fun, the zip file we are testing with has at least one file inside it that is not a text file. Our requirements simply stated to set these aside for &#34;additional investigation&#34;. These errors are in the <strong>unmatched</strong> relationship we reviewed previously. That is the relationship that still needs to be taken care of to get our <strong>Verify Text File</strong> processor out of its current invalid state.</p>
+<p class="image-container"><img style="width: 562.50px" src="img/6aac4368bd7c8f07.png"></p>
+<p>We previously found out how to auto-terminate a relationship, but if we do that in this situation we will lose visibility to any FlowFile that might be assigned to this relationship. We need to connect it to another component. Maybe we can use that <strong>Funnel</strong> component type in the palette? </p>
+<p class="image-container"><img style="width: 665.50px" src="img/c47231927d0a5332.png"></p>
+<p>While SURELY NOT the intended usage of a Funnel (yes... let&#39;s tackle it in another tutorial) it is a somewhat common practice in initial dataflow construction to use a Funnel for such a reason. Drag one onto the canvas and connect the <strong>unmatched</strong> relationship to it.</p>
+<p class="image-container"><img style="width: 551.08px" src="img/ecbaa01e6c7faeb8.png"></p>
+<p>If you did it right, the <strong>yellow triangle</strong> next to the <strong>Verify Text File</strong> processor changed to a <strong>red square</strong> which indicates it is not running, but that it is eligible to be started.</p>
+<h2 is-upgraded><strong>Run it!</strong></h2>
+<p>Take advantage of all your hard work by starting <strong>Verify Text File</strong> (i.e. right click on it for this option to surface) and watch those 43 FlowFiles queued into it flow down into the queues backing the connections addressing the <strong>tutorial.isText</strong> and <strong>unmatched</strong> relationships.</p>
+<p class="image-container"><img style="width: 582.20px" src="img/dcd88439a02a2471.png"></p>
+<p>Spot-check a few of the 42 FlowFiles flowing through <strong>tutorial.isText</strong>. Afterwards, do the same to see what the single FlowFile is in <strong>unmatched</strong>. Be sure to switch the <strong>View</strong> pulldown to <strong>image</strong>.</p>
+<p class="image-container"><img style="width: 579.73px" src="img/3e8086f6acb85b2a.png"></p>
+<p>Aha! It is a striking image of The Bard himself. Very nice! </p>
+<p>We have done enough &#34;additional investigation&#34; on this image that we can simply dismiss it. A very useful feature, especially when initially developing, testing, and debugging a dataflow, is to delete the contents of a queue.  Simply right click on the queue and select <strong>Empty Queue</strong> from the bottom of the contextual menu that surfaces.</p>
+<p class="image-container"><img style="width: 436.50px" src="img/a60846095c313eaa.png"></p>
+<p>Maybe Hamlet could have said, &#34;To queue, or not to queue: that is the question&#34;, but who are we to doubt the accomplished Bill Shakespeare?</p>
+<aside class="special"><p><strong>Note:</strong> Don&#39;t do it now, but know that if you right click on an empty area of the canvas an <strong>Empty All Queues</strong> option is available at the bottom of the contextual menu that surfaces.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Determine file size category" duration="3">
+        <p>As a reminder, our transform requirements include classifying the text files based on their content&#39;s byte count. The following categories were declared.</p>
+<ul>
+<li><code>small</code> – when file size is &lt;= 75 KB</li>
+<li><code>medium</code> – files &gt; 75 KB and &lt;= 150 KB</li>
+<li><code>large</code> – any file &gt; 150 KB</li>
+</ul>
+<h2 is-upgraded><strong>Create an attribute</strong></h2>
+<p>You might think we can just use something that would be called <strong>AddAttribute</strong>, but no such processor exists. Fortunately, <strong>UpdateAttribute</strong> comes to the rescue and acts in an up-sert model by either creating or updating FlowFile attributes. </p>
+<aside class="special"><p><strong>Note:</strong> We won&#39;t explore it now, but <strong>UpdateAttribute</strong> can also delete attributes.</p>
+</aside>
+<p>The <strong>Dynamic Properties</strong> section of the <strong>UpdateAttribute</strong> documentation explains we can simply add a new custom property whose name will be used to create an attribute with the same name. The property value will then become the value of the attribute as well.</p>
+<p class="image-container"><img style="width: 602.50px" src="img/e784f357c00be742.png"></p>
+<p>Let&#39;s use the <strong>UpdateAttribute</strong> processor that we already added to the flow and renamed to <strong>Check fileSize</strong> to tackle the first part of this. Create a dynamic property named <strong>tutorial.sizeCategory</strong> with the following expression language code.</p>
+<pre><code>${fileSize:lt(75000):ifElse(&#39;small&#39;, 
+  ${fileSize:lt(150000):ifElse(&#39;medium&#39;,&#39;large&#39;)})}</code></pre>
+<aside class="special"><p><strong>Note:</strong> As stated before, an exhaustive review of expression language is out of scope in this tutorial. The<a href="https://nifi.apache.org/nifi-docs/expression-language-guide.html" target="_blank"> Apache NiFi Expression Language Guide</a> is the definitive guide.</p>
+</aside>
+<p>It should look like the screenshot below. The line break does not show in this view and the ... indicates there is more information than can fit in the preview window.</p>
+<p class="image-container"><img style="width: 663.50px" src="img/e0a880d179cb1058.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> If you see a <strong>blue info circle icon</strong> on the far right of the <strong>Value</strong> like shown below, it indicates a syntax error in the expression language content. Hovering over it provides additional details.</p>
+<p class="image-container"><img style="width: 1606.00px" src="img/11b30771092e7823.png"></p>
+<p>In this specific scenario, there is an extra line break that needs to be removed.</p>
+</aside>
+<h2 is-upgraded><strong>Verify the logic</strong></h2>
+<p>As you will use the <strong>tutorial.sizeCategory</strong> when persisting the files at the end of the data pipeline, add a <strong>PutFile</strong> processor and connect <strong>success</strong> from the prior processor to it. <strong>Start</strong> the <strong>Check fileSize</strong> processor and verify all 42 FlowFiles have been passed into the new connection.</p>
+<p class="image-container"><img style="width: 384.50px" src="img/747ccf5215d454b6.png"></p>
+<p><strong>List queue </strong>and verify the <strong>tutorial.sizeCategory</strong> attribute is being set properly such as in the following examples.</p>
+<h3 is-upgraded><strong>small</strong></h3>
+<p class="image-container"><img style="width: 678.50px" src="img/47db9a5fded6cdb5.png"></p>
+<p class="image-container"><img style="width: 312.50px" src="img/bb0601743055078c.png"></p>
+<h3 is-upgraded><strong>medium</strong></h3>
+<p class="image-container"><img style="width: 682.50px" src="img/fd2b527815b0c521.png"></p>
+<p class="image-container"><img style="width: 324.50px" src="img/6adeccf2ea12fe5b.png"></p>
+<h3 is-upgraded><strong>large</strong></h3>
+<p class="image-container"><img style="width: 686.10px" src="img/55da84f820122ecc.png"></p>
+<p class="image-container"><img style="width: 323.50px" src="img/93cd357f3f5a2930.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Persist the text files" duration="3">
+        <p>You&#39;ve already tackled the E and T of the ETL pipeline requirements, so time to finish up the L and wrap the tutorial up! </p>
+<p class="image-container"><img style="width: 624.00px" src="img/7b97b30424cbdfe.png"></p>
+<h2 is-upgraded><strong>Identify the folder</strong></h2>
+<p>Edit the <strong>PutFile</strong> processor&#39;s <strong>Directory</strong> property. Begin with the fully qualified directory name for your <code>/mocks/egress</code> folder and then add <code>${tutorial.sizeCategory}</code> to the end of it. This will allow the FlowFile&#39;s specific value for this dynamic attribute to identify the final subfolder to be used when writing each file.</p>
+<p>Your value will be slightly different than this example.</p>
+<pre><code>/Users/lester/explore/mocks/egress/${tutorial.sizeCategory}</code></pre>
+<p>Change <strong>Conflict Resolution Strategy</strong> to <strong>replace</strong> in case you ingest future zip files that have the same file name that may exist.</p>
+<p class="image-container"><img style="width: 649.50px" src="img/3f7fc38f36b2b48.png"></p>
+<aside class="special"><p><strong>Note:</strong> In a real-world scenario this simple &#34;replace&#34; approach likely would not be appropriate. There are multiple approaches to create a more robust solution and are purposely not discussed in this tutorial.</p>
+</aside>
+<h2 is-upgraded><strong>Resolve the relationships</strong></h2>
+<p>Connect <strong>failure</strong> to the <strong>Funnel</strong> already on the canvas and auto-terminate <strong>success</strong>.</p>
+<p class="image-container"><img style="width: 532.50px" src="img/8a7d66648c13f1bc.png"></p>
+<h2 is-upgraded><strong>Persist the files</strong></h2>
+<p>To finish the pipeline, <strong>Start</strong> the <strong>PutFile</strong> processor. With <strong>success</strong> auto-terminated there will be no connection to see the FlowFiles that were persisted, but you will see the queue coming into it is now empty. Also, ensure the <strong>failure</strong> connection is empty.</p>
+<p class="image-container"><img style="width: 578.50px" src="img/39cabaca619b7c84.png"></p>
+<h2 is-upgraded><strong>Trust, but verify</strong></h2>
+<p>Double-check to see if the files appropriately made it to the correct destinations</p>
+<h3 is-upgraded><strong>2 small files</strong></h3>
+<p class="image-container"><img style="width: 686.70px" src="img/4cd6bf7026880ff7.png"></p>
+<h3 is-upgraded><strong>28 medium files</strong></h3>
+<p class="image-container"><img style="width: 686.78px" src="img/c9ded73622b4688e.png"></p>
+<h3 is-upgraded><strong>12 large files</strong></h3>
+<p class="image-container"><img style="width: 687.50px" src="img/194b331e12b6cb63.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="The dataflow" duration="1">
+        <h2 is-upgraded><strong>10,000 foot view </strong></h2>
+<p>If you zoom out until you see the entire flow, it likely looks similar to this.</p>
+<p class="image-container"><img style="width: 687.56px" src="img/cc439c0023f4d954.png"></p>
+<p>NiFi&#39;s low-code solution is definitely different from just opening a code editor and starting to program in your favorite language. The real trick to get used to is knowing what your overall flow is (i.e. the forest) and being able to mentally zoom in and realize you are working with steps, sometimes micro-steps, (i.e. the trees) to fulfill the logic your dataflow needs.</p>
+<h2 is-upgraded><strong>Less is more</strong></h2>
+<p>It is easy to imagine that anything much more complex than our simple use case in this tutorial could visually be very complex. There are strategies including using Process Groups, like we nested our work into, to make dataflows more readable &amp; maintainable and to even support multiple development teams tackle different aspects of a complete dataflow.</p>
+<aside class="special"><p><strong>Note:</strong> You cannot edit the configuration of a running processor. Simply stop it and then it will become editable.</p>
+</aside>
+<h2 is-upgraded><strong>Speaking of &#34;more&#34;</strong></h2>
+<p>There are literally hundreds of processors to allow you to tackle so many possible solutions, but don&#39;t let that overwhelm you. There are tons of blogs, videos, and tutorials available due to the wide adoption of Apache NiFi at over 8000 organizations. Good luck on your NiFi journey.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Environment tear-down" duration="1">
+        <h2 is-upgraded><strong>Stop NiFi </strong></h2>
+<p>Return to the terminal where you started NiFi from (there may be additional log messages since you kicked it off) and stop NiFi with a <strong>CTRL-C</strong> operation.</p>
+<p class="image-container"><img style="width: 672.69px" src="img/a5cbde1a9f436d61.png"></p>
+<h2 is-upgraded><strong>Delete NiFi </strong></h2>
+<p><em>If you want to remove NiFi,</em> simply navigate up two directories and delete the zip file and the folder that was created when unzipping it. Also remember to remove the <code>/mocks</code> directory wherever you created it at.</p>
+<p class="image-container"><img style="width: 676.50px" src="img/72bab84a4b6dc453.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Tutorial wrap-up" duration="1">
+        <p>Congratulations, you&#39;ve completed the <strong>Intro to Apache NiFi flow development</strong> tutorial!</p>
+<h2 is-upgraded><strong>What you learned</strong></h2>
+<ul>
+<li>The function of the major component types; processors, connections, and FlowFiles.</li>
+<li>How to construct a dataflow/pipeline with these components.</li>
+<li>How to control the run-time lifecycle of your dataflow.</li>
+<li>Simple debugging approaches and interrogation of FlowFiles in your pipeline.</li>
+<li>How to utilize product documentation for components.</li>
+</ul>
+<h2 is-upgraded><strong>What&#39;s next?</strong></h2>
+<p>Check out some of these codelabs...</p>
+<ul>
+<li><a href="https://devcenter.datavolo.io/tutorials/ingress-egress-aws-s3/" target="_blank">Doc ingress/egress with AWS S3</a></li>
+<li><a href="https://devcenter.datavolo.io/tutorials/github-simple/" target="_blank">Versioning NiFi flows with GitHub</a>  </li>
+<li><a href="https://devcenter.datavolo.io/tutorials/build-python-transform/" target="_blank">Build a NiFi Python transform processor</a> </li>
+</ul>
+<h2 is-upgraded><strong>Further reading</strong></h2>
+<ul>
+<li><a href="https://datavolo.io/product/" target="_blank">Fuel Your AI With Datavolo and Apache NiFi</a> </li>
+<li><a href="https://datavolo.io/blog/" target="_blank">Datavolo Blog</a> </li>
+</ul>
+<h2 is-upgraded><strong>Reference docs</strong></h2>
+<ul>
+<li><a href="https://nifi.apache.org/nifi-docs/overview.html" target="_blank">Apache NiFi Overview</a></li>
+<li><a href="https://nifi.apache.org/nifi-docs/getting-started.html" target="_blank">Getting Started with Apache NiFi</a>  </li>
+<li><a href="https://nifi.apache.org/nifi-docs/user-guide.html" target="_blank">Apache NiFi User Guide</a>  </li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
