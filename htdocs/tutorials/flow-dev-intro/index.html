@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
-  <title></title>
+  <title>Intro to Apache NiFi flow development</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
   <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
@@ -24,12 +24,12 @@
   <google-codelab codelab-gaid="G-0ZJ67JQPFE"
                   codelab-ga4id=""
                   id="flow-dev-intro"
-                  title=""
+                  title="Intro to Apache NiFi flow development"
                   environment="web"
                   feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_flow-dev-intro">
     
       <google-codelab-step label="Tutorial overview" duration="1">
-        <p><strong>Last Updated:</strong> 2024–11-25</p>
+        <p><strong>Last Updated:</strong> 2025-06-12</p>
 <p class="image-container"><img style="width: 613.50px" src="img/8b9009608f34b1a7.png"></p>
 <h2 is-upgraded><strong>Background</strong></h2>
 <p>This <strong>Intro to Apache NiFi flow development</strong> tutorial assumes you are new to <a href="https://nifi.apache.org/" target="_blank">Apache NiFi,</a> or at least new to developing a dataflow with it. NiFi is an easy to use, powerful, and reliable system to process and distribute data. To be successful with NiFi, it is important to make sure you understand the fundamentals of working with the flow builder and its component types.</p>
@@ -57,25 +57,25 @@
 </aside>
 <h2 is-upgraded><strong>Download NiFi</strong></h2>
 <p>Visit <a href="https://nifi.apache.org/download/" target="_blank">https://nifi.apache.org/download/</a> and under the <strong>NIFI</strong> tab click on the <strong>NiFi Standard 2.x.x</strong> button under the <strong>Binaries</strong> heading.</p>
-<p class="image-container"><img style="width: 542.85px" src="img/b5dc946d019ae961.png"></p>
+<p class="image-container"><img style="width: 658.09px" src="img/786ab71001f9bb4f.png"></p>
 <p>Use the link at the top of the Apache Software Foundation (ASF) page that surfaces to download a zip file of a precompiled version of NiFi.</p>
-<p class="image-container"><img style="width: 457.50px" src="img/9f970fdcbf8bf94f.png"></p>
+<p class="image-container"><img style="width: 457.14px" src="img/900409ea6ba0df3.png"></p>
 <aside class="warning"><p><strong>Caution:</strong> While this tutorial does not repeat them, it is advisable to follow the <strong>VERIFY THE INTEGRITY OF THE FILES </strong>instructions just below the download link options.</p>
 </aside>
 <h2 is-upgraded><strong>Unzip the file</strong></h2>
 <p><em>Using your workstation tools, </em>move the downloaded zip file to a directory of your choosing and then unzip it.</p>
-<p class="image-container"><img style="width: 679.50px" src="img/ee5e985865b37e2c.png"></p>
+<p class="image-container"><img style="width: 680.50px" src="img/2d3a815755aafbb9.png"></p>
 <p><em>Using your workstation tools,</em> find the <code>/bin</code> directory in file structure you unzipped.</p>
-<p class="image-container"><img style="width: 675.75px" src="img/4c61c2910f16fa0c.png"></p>
+<p class="image-container"><img style="width: 354.71px" src="img/7c9f123f2b61ddf2.png"></p>
 <h2 is-upgraded><strong>Start NiFi</strong></h2>
 <p><em>Using your workstation tools, </em>navigate into the <code>/bin</code> directory and execute <code>nifi.sh</code> or <code>nifi.cmd</code> (based on your workstation) followed by <code>run</code>.</p>
 <aside class="special"><p><strong>Note:</strong> Visit <a href="https://nifi.apache.org/nifi-docs/administration-guide.html#how-to-install-and-start-nifi" target="_blank">How to install and start NiFi</a> for a definition of the <code>start</code>, <code>stop</code>, <code>status</code>, and <code>run</code> command options.</p>
 </aside>
-<p class="image-container"><img style="width: 686.50px" src="img/729e16432d703b33.png"></p>
+<p class="image-container"><img style="width: 687.50px" src="img/bcc5dc568d4e2283.png"></p>
 <p>You will see something similar to the following which indicates it started.</p>
 <p class="image-container"><img style="width: 691.25px" src="img/c445c793c8b2600b.png"></p>
 <p><em>Using your workstation tools, </em>search <code>/logs/nifi-app.log</code> for lines that start with <code>Generated</code>.</p>
-<p class="image-container"><img style="width: 688.50px" src="img/6fe36d9379c0089a.png"></p>
+<p class="image-container"><img style="width: 693.44px" src="img/28c1ad2465fec936.png"></p>
 <p>Capture those two values as they are the generated username and password for your instance of NiFi and will be needed to access the UI.</p>
 <aside class="special"><p><strong>Note: </strong><a href="https://nifi.apache.org/nifi-docs/getting-started.html#i-started-nifi-now-what" target="_blank">Started NiFi. Now What?</a> provides instructions on how to change the username and password if so desired.</p>
 </aside>
@@ -115,8 +115,8 @@
 <p>The unzipped text files should be persisted to subfolders aligned with the content size classifications within the egress destination&#39;s parent folder.</p>
 <h2 is-upgraded><strong>Set up mock extract &amp; load locations</strong></h2>
 <p>NiFi ships with components that tackle reading from &amp; writing from a wide variety of databases, object stores, search engines, message platforms, commercial systems, and more. To simplify this tutorial, you will use mock locations on the file system that NiFi is deployed on to extract files from, and to load the end results of the pipeline, to.</p>
-<p>Create a <code>/mocks</code> folder somewhere on your file system and then create the following subfolders.</p>
-<p class="image-container"><img style="width: 678.50px" src="img/484de6f378ac03ef.png"></p>
+<p>Create a <code>/mocks</code> folder somewhere on your file system and then create the following empty subfolders.</p>
+<p class="image-container"><img style="width: 681.50px" src="img/1c3e9d3171f21df9.png"></p>
 
 
       </google-codelab-step>
