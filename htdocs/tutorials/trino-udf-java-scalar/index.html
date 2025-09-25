@@ -1,0 +1,229 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Create a Trino UDF function with Java</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid="G-0ZJ67JQPFE"
+                  codelab-ga4id=""
+                  id="trino-udf-java-scalar"
+                  title="Create a Trino UDF function with Java"
+                  environment="web"
+                  feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_trino-udf-java-scalar">
+    
+      <google-codelab-step label="Tutorial overview" duration="1">
+        <p><strong>Last Updated:</strong> 2025-09-25</p>
+<p class="image-container"><img style="width: 547.50px" src="img/4df7b0915623ac3f.png"></p>
+<h2 is-upgraded><strong>Background</strong></h2>
+<p>This <strong>Create a Trino UDF function with Java</strong> tutorial assumes you are conceptually familiar with <a href="https://trino.io/" target="_blank">Trino</a> as a query engine, confident with SQL, and are interested in building your own User Defined Function (UDF). Additionally, it is assumed you are comfortable programming in Java and have a foundational knowledge with <a href="https://www.w3schools.com/git/git_intro.asp" target="_blank">Git</a> and <a href="https://maven.apache.org/" target="_blank">Maven</a>.</p>
+<h2 is-upgraded><strong>Scope of the tutorial</strong></h2>
+<p>In this tutorial, you will learn by example how to develop, build, deploy, and test your own custom UDF with Trino. You will have a working Java project template by the end of this tutorial that you can use as a basis for building additional UDFs to meet your specific needs.</p>
+<h2 is-upgraded><strong>Learning objectives</strong></h2>
+<p>Once you&#39;ve completed this tutorial, you will be able to:</p>
+<ul>
+<li>Deploy Trino locally via Docker.</li>
+<li>Clone an existing example UDF Java project.</li>
+<li>Build and prepare compiled artifacts for deployment.</li>
+<li>Test the example UDF via SQL.</li>
+<li>Create a new Java function to be used as a SQL-based UDF.</li>
+<li>Deploy and test the new UDF.</li>
+</ul>
+<h2 is-upgraded><strong>Prerequisites</strong></h2>
+<ul>
+<li>Docker Engine installed on your workstation; see <a href="https://docs.docker.com/engine/install/" target="_blank">https://docs.docker.com/engine/install/</a>. </li>
+<li>Git tooling of your choice.</li>
+<li>Appropriate versions of a JDK and Maven are installed; see <a href="https://github.com/lestermartin/trino-udf-exploration/tree/main/plugin-udfs#build" target="_blank">https://github.com/lestermartin/trino-udf-exploration/tree/main/plugin-udfs#build</a> for previously tested versions.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prepare the environment" duration="6">
+        <h2 is-upgraded><strong>Clone the example repo</strong></h2>
+<p><em>Using the git tooling of your choice,</em> clone the <a href="https://github.com/lestermartin/trino-udf-exploration" target="_blank">https://github.com/lestermartin/trino-udf-exploration</a> repository onto your workstation. Feel free to fork this repo to your own account first if you prefer.</p>
+<aside class="special"><p><strong>Note:</strong> Alternatively, you can simply choose <strong>Code</strong> &gt; <strong>Local</strong> &gt; <strong>Download ZIP</strong> from the link above to retrieve a zipped file of the codebase which you can then unzip onto your workstation.</p>
+<p class="image-container"><img style="width: 918.00px" src="img/936caecf4397afb5.png"></p>
+</aside>
+<h2 is-upgraded><strong>Build the project</strong></h2>
+<p>Navigate into the cloned copy of the repo, then navigate into a subdirectory named <code>plugin-udfs</code>, then navigate into another subdirectory named <code>plugin-udfs</code>, and verify there is a file named <code>pom.xml</code>.</p>
+<p class="image-container"><img style="width: 685.92px" src="img/5518862a9ec310d1.png"></p>
+<p>Use Maven to compile the example UDF code.</p>
+<pre><code>mvn package -Dmaven.test.skip=true</code></pre>
+<p>Ensure the build is successful.</p>
+<p class="image-container"><img style="width: 689.50px" src="img/200f5df9e2bc6ef4.png"></p>
+<p>A new zip file will now be created in the <code>target</code> subdirectory.</p>
+<p class="image-container"><img style="width: 686.50px" src="img/e4dfe9310dc09691.png"></p>
+<h2 is-upgraded><strong>Stage the compiled artifacts</strong></h2>
+<p><em>Using your workstation tools, </em>copy the zip file to another location on your workstation and unzip it. Verify the newly created folder has a number of jar files.</p>
+<p class="image-container"><img style="width: 691.50px" src="img/b64cba79117525ea.png"></p>
+<h2 is-upgraded><strong>Start Trino</strong></h2>
+<p>After reviewing the information in <a href="https://trino.io/docs/current/installation/containers.html" target="_blank">Trino in a Docker container</a>, run the following command.</p>
+<aside class="special"><p><strong>Note:</strong> Replace <code>YOUR-UNZIPPED-DIR</code> with the path from the prior step. </p>
+</aside>
+<pre><code>docker run --name trino -d -p 8080:8080 --volume YOUR-UNZIPPED-DIR:/usr/lib/trino/plugin/trino-udf-exploration trinodb/trino</code></pre>
+<p><em>Using your Docker tooling,</em> verify that the container started successfully.</p>
+<p class="image-container"><img style="width: 693.50px" src="img/2d2e54a010f3299e.png"></p>
+<p class="image-container"><img style="width: 543.00px" src="img/f55f8190918a83ee.png"></p>
+<h2 is-upgraded><strong>Execute a query</strong></h2>
+<p>Follow the <a href="https://trino.io/docs/current/installation/containers.html#executing-queries" target="_blank">Executing queries</a> instructions to verify the Trino cluster is operational.</p>
+<p class="image-container"><img style="width: 687.54px" src="img/5602ccf7064bb8d0.png"></p>
+<p>Leave the Trino client application open to the <code>trino></code> prompt.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Explore an example UDF" duration="4">
+        <h2 is-upgraded><strong>Review the implementation</strong></h2>
+<p>Open the <code>ExampleStringFunction.java</code> source file in your editor.</p>
+<p class="image-container"><img style="width: 691.22px" src="img/d2f9ed44b9dc455a.png"></p>
+<p>Review the <code>lowercaser()</code> function which can be utilized from SQL.</p>
+<p class="image-container"><img style="width: 689.50px" src="img/f7bca9eaa0494eab.png"></p>
+<p>The <code>@ScalarFunction</code> annotation indicates the name of the function that will be available in SQL.</p>
+<p class="image-container"><img style="width: 683.50px" src="img/64b55e4979e0c4dc.png"></p>
+<p>The <code>@SqlType</code> annotation above the method name indicates the data type that the scalar (i.e. row-level) SQL function will return.</p>
+<p class="image-container"><img style="width: 684.50px" src="img/ba6619548800c48b.png"></p>
+<p>The <code>@SqlType</code> annotation in the argument list indicates the data type it is expecting to be passed in.</p>
+<p class="image-container"><img style="width: 681.72px" src="img/6e1d7ff079aeeba4.png"></p>
+<p>And the simple implementation is just forcing the passed in string to be all lower-case before being returned.</p>
+<p class="image-container"><img style="width: 684.50px" src="img/99cbd6f286216679.png"></p>
+<aside class="special"><p><strong>Note:</strong> Review <a href="https://trino.io/docs/current/develop/functions.html" target="_blank">Functions — Trino Documentation</a> for more information. </p>
+</aside>
+<h2 is-upgraded><strong>Test the function</strong></h2>
+<p>In the open Trino client application, type the following at the <code>trino></code> prompt to list the <code>test_lowercaser</code>, and possibly other, functions available in SQL.</p>
+<pre><code>SHOW FUNCTIONS LIKE &#39;%test_%&#39;;</code></pre>
+<p class="image-container"><img style="width: 699.50px" src="img/4bcbb7c8b319f105.png"></p>
+<aside class="special"><p><strong>Note:</strong> You can use the arrow keys to scroll around the results and when ready to exit this view, type a <code>:</code> and then a <code>q</code> on your keyboard to return to the prompt. You can find more about this tool in <a href="https://trino.io/docs/current/client/cli.html" target="_blank">Command line interface — Trino Documentation</a>. </p>
+</aside>
+<p>Test out the example function with scenarios like the following.</p>
+<pre><code>select test_lowercaser(&#39;AbCdEfGhIjK... that is ENOUGH!&#39;);</code></pre>
+<p class="image-container"><img style="width: 699.50px" src="img/71fd0df2093c24f3.png"></p>
+<p>Feel free to explore other scenarios with this function or try any of the other example functions that are present.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Implement a new UDF" duration="5">
+        <h2 is-upgraded><strong>Stub out a new function</strong></h2>
+<p>In the <code>ExampleStringFunction.java</code> file, make a copy of the <code>lowercaser()</code> function as well as the following modifications:</p>
+<ul>
+<li>Change the Java function name from <code>lowercaser</code> to <code>reverser</code></li>
+<li>Change the <code>@ScalarFunction</code> annotation so the SQL function will be named <code>test_reverser</code></li>
+<li>Change the <code>@Description</code> annotation&#39;s value to <code>Reverses the order of the string</code></li>
+</ul>
+<p class="image-container"><img style="width: 679.28px" src="img/d27cd9e3b90a3a6b.png"></p>
+<h2 is-upgraded><strong>Implement the logic</strong></h2>
+<p>Change the body of the newly created method to implement the logic required to reverse the order of the string. The following is one possible approach.</p>
+<pre><code>        String argument = slice.toStringUtf8();
+        StringBuilder stringBuilder = new StringBuilder(argument);
+        stringBuilder.reverse();
+        return Slices.utf8Slice(stringBuilder.toString());</code></pre>
+<h2 is-upgraded><strong>Build the project</strong></h2>
+<p>Run the Maven build again.</p>
+<pre><code>mvn package -Dmaven.test.skip=true</code></pre>
+<p>Ensure it completed successfully and a new zip file was just created.</p>
+<p class="image-container"><img style="width: 689.19px" src="img/feb151f4311a05ce.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Deploy &amp; test the new UDF" duration="4">
+        <h2 is-upgraded><strong>Shut down the Trino CLI</strong></h2>
+<p>Exit from the Trino client.</p>
+<p class="image-container"><img style="width: 690.50px" src="img/78ad0a3e74f9263a.png"></p>
+<h2 is-upgraded><strong>Tear-down the Docker container</strong></h2>
+<p>Run the following two commands to shutdown and destroy the Docker container.</p>
+<pre><code>docker stop trino
+docker rm trino</code></pre>
+<p class="image-container"><img style="width: 694.50px" src="img/c5b39c245b208ed8.png"></p>
+<h2 is-upgraded><strong>Stage the compiled artifacts</strong></h2>
+<p><em>Using your workstation tools, </em>copy the regenerated zip file to the same location on your workstation and unzip it again. Verify the newly created folder has a number of jar files.</p>
+<p class="image-container"><img style="width: 691.50px" src="img/32dc18c8680d5095.png"></p>
+<h2 is-upgraded><strong>Start Trino</strong></h2>
+<p>As before, start Trino again.</p>
+<aside class="special"><p><strong>Note:</strong> Replace <code>YOUR-UNZIPPED-DIR</code> with the path from the prior step. </p>
+</aside>
+<pre><code>docker run --name trino -d -p 8080:8080 --volume YOUR-UNZIPPED-DIR:/usr/lib/trino/plugin/trino-udf-exploration trinodb/trino</code></pre>
+<p><em>Using your Docker tooling,</em> verify that the container started successfully.</p>
+<p class="image-container"><img style="width: 693.50px" src="img/2d2e54a010f3299e.png"></p>
+<h2 is-upgraded><strong>Test the new SQL function</strong></h2>
+<p>Start the Trino CLI, verify the new function exists, and verify it works correctly..</p>
+<p class="image-container"><img style="width: 689.64px" src="img/d9067568d30a9275.png"></p>
+<p>It works!!</p>
+<p class="image-container"><img style="width: 580.82px" src="img/2acd61b545579d9a.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Environment tear-down" duration="1">
+        <h2 is-upgraded><strong>Shut down the Trino CLI</strong></h2>
+<p>Exit from the Trino client.</p>
+<p class="image-container"><img style="width: 690.50px" src="img/78ad0a3e74f9263a.png"></p>
+<h2 is-upgraded><strong>Tear-down the Docker container</strong></h2>
+<p>Run the following two commands to shutdown and destroy the Docker container.</p>
+<pre><code>docker stop trino
+docker rm trino</code></pre>
+<p class="image-container"><img style="width: 694.50px" src="img/c5b39c245b208ed8.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Tutorial wrap-up" duration="1">
+        <p>Congratulations, you&#39;ve completed the <strong>Create a Trino UDF function with Java </strong>tutorial!</p>
+<h2 is-upgraded><strong>What you learned</strong></h2>
+<ul>
+<li>How to deploy Trino locally via Docker.</li>
+<li>Where to find an existing example UDF Java project.</li>
+<li>How to build and prepare compiled artifacts for deployment.</li>
+<li>How to test the example UDF via SQL.</li>
+<li>How to create a new Java function to be used as a SQL-based UDF.</li>
+<li>How to deploy and test the new UDF.</li>
+</ul>
+<h2 is-upgraded><strong>What&#39;s next?</strong></h2>
+<p>Check out some other examples...</p>
+<ul>
+<li><a href="https://github.com/victorcouste/trino-encrypt-udfs" target="_blank">Trino UDFs Plugin to encrypt/decrypt values with a password</a></li>
+<li><a href="https://github.com/trinodb/trino/tree/master/core/trino-main/src/main/java/io/trino/operator/scalar" target="_blank">Trino source code of built-in scalar functions</a>  </li>
+</ul>
+<h2 is-upgraded><strong>Further reading</strong></h2>
+<ul>
+<li><a href="https://blog.csdn.net/zby384/article/details/145062038" target="_blank">Trino UDF开发-CSDN博客</a> </li>
+<li><a href="https://rishav-sarkar.medium.com/building-presto-plugin-for-adding-user-defined-functions-a0664559a758" target="_blank">Building Presto plugin for adding User Defined Functions. | by Rishav Sarkar</a> </li>
+</ul>
+<h2 is-upgraded><strong>Reference docs</strong></h2>
+<ul>
+<li><a href="https://trino.io/docs/current/installation/containers.html" target="_blank">Trino in a Docker container — Trino Documentation</a>  </li>
+<li><a href="https://trino.io/docs/current/client/cli.html" target="_blank">Command line interface — Trino Documentation</a> </li>
+<li><a href="https://trino.io/docs/current/develop/spi-overview.html" target="_blank">SPI overview — Trino Documentation</a> </li>
+<li><a href="https://trino.io/docs/current/develop/functions.html" target="_blank">Functions — Trino Documentation</a> </li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>

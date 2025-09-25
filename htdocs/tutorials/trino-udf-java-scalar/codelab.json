@@ -1,0 +1,27 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2025-09-25T16:35:53Z",
+  "id": "trino-udf-java-scalar",
+  "duration": 22,
+  "title": "Create a Trino UDF function with Java",
+  "authors": "Lester Martin",
+  "summary": "In this codelab, you will build, deploy, and test a simple scalar UDF plugin with Java.",
+  "source": "1gEZGmZFMdtCTYtnE-q93AKXQa1Ghwgd7o6KFB098qAs",
+  "theme": "tutorial",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "tutorial"
+  ],
+  "tags": [
+    "kiosk",
+    "web"
+  ],
+  "feedback": "mailto:lester.martin@gmail.com?subject=Tutorial_trino-udf-java-scalar",
+  "ga": "G-0ZJ67JQPFE",
+  "url": "trino-udf-java-scalar"
+}

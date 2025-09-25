@@ -2,13 +2,7 @@
 
 const listedTutorialIds = [
 	"flow-dev-intro",
-	"manage-assets",
-	"import-export",
-	"github-simple",
-	"ingress-egress-aws-s3",
-	"upload-nar",
-	"build-python-transform",
-	"python-error-handling",
+	"trino-udf-java-scalar"
 ];
 
 function showByCat(dropdown) {
