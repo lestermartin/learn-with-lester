@@ -1,0 +1,27 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2025-10-17T19:35:37Z",
+  "id": "trino-iceberg-v3",
+  "duration": 32,
+  "title": "Exploring Iceberg v3 with Starburst",
+  "authors": "Lester Martin",
+  "summary": "In this codelab, you will explore some of the new features of Apache Iceberg that have surfaced in version 3 of the specification.",
+  "source": "1X_adDuEgFUqP_kpq7oaIuYp-pcl7r1V1U1LMMQFWnbA",
+  "theme": "tutorial",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "tutorial"
+  ],
+  "tags": [
+    "kiosk",
+    "web"
+  ],
+  "feedback": "mailto:lester.martin@gmail.com?subject=Tutorial_trino-iceberg-v3",
+  "ga": "G-0ZJ67JQPFE",
+  "url": "trino-iceberg-v3"
+}
