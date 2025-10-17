@@ -2,7 +2,8 @@
 
 const listedTutorialIds = [
 	"flow-dev-intro",
-	"trino-udf-java-scalar"
+	"trino-udf-java-scalar",
+	"trino-iceberg-v3"
 ];
 
 function showByCat(dropdown) {

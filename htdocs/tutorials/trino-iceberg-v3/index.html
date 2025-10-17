@@ -1,0 +1,585 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Exploring Iceberg v3 with Starburst</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid="G-0ZJ67JQPFE"
+                  codelab-ga4id=""
+                  id="trino-iceberg-v3"
+                  title="Exploring Iceberg v3 with Starburst"
+                  environment="web"
+                  feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_trino-iceberg-v3">
+    
+      <google-codelab-step label="Tutorial overview" duration="1">
+        <p><strong>Last Updated:</strong> 2025-10-17</p>
+<p class="image-container"><img style="width: 740.00px" src="img/11e102a3c1e2bbb2.png"></p>
+<h2 is-upgraded><strong>Background</strong></h2>
+<p>This <strong>Exploring Iceberg v3 with Starburst</strong> tutorial assumes you are conceptually familiar with <a href="https://iceberg.apache.org/" target="_blank">Apache Iceberg</a> as a modern table format and with using <a href="https://trino.io/" target="_blank">Trino</a> as a query engine. Additionally, it is assumed you have some awareness of the new Iceberg features that have surfaced in version 3 of the specification as summarized in <a href="https://www.starburst.io/blog/iceberg-v3/" target="_blank">Iceberg v3 + Starburst</a>. </p>
+<h2 is-upgraded><strong>Scope of the tutorial</strong></h2>
+<p>In this tutorial, you will learn by example how some of the major version 3 changes function. You will use Starburst Galaxy as the environment for this exploration.</p>
+<h2 is-upgraded><strong>Learning </strong><strong>objectives</strong></h2>
+<p>Once you&#39;ve completed this tutorial, you will be able to:</p>
+<ul>
+<li>Explain the difference between v2 positional delete files and v3 deletion vectors.</li>
+<li>Leverage the <code>VARIANT</code> data type in your tables.</li>
+<li>Utilize nanosecond precision timestamp columns.</li>
+<li>Create and alter tables with default column values.</li>
+<li>Understand how row lineage works and can be useful.</li>
+</ul>
+<h2 is-upgraded><strong>Prerequisites</strong></h2>
+<ul>
+<li>Access to a <a href="https://www.starburst.io/starburst-galaxy/" target="_blank">Starburst Galaxy</a> environment; see <a href="https://devcenter.starburst.io/tutorials/starburst-galaxy-getting-started" target="_blank">Starburst Galaxy: Getting started</a>.</li>
+<li>A data lake catalog configured with write access to an underlying object store; see <a href="https://devcenter.starburst.io/tutorials/configure-a-starburst-galaxy-data-lake-catalog-and-schema" target="_blank">Configure a Starburst Galaxy data lake catalog and schema</a>. </li>
+</ul>
+<aside class="special"><p><strong>Note:</strong> With appropriate alterations, this lab can also be exercised with an instance of <a href="https://www.starburst.io/starburst-enterprise/" target="_blank">Starburst Enterprise</a> (Release <a href="https://docs.starburst.io/latest//release/release-476-e.html" target="_blank">476-e</a> or later) configured with a <a href="https://docs.starburst.io/latest/connector/iceberg.html" target="_blank">Starburst Iceberg connector</a>.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prepare the environment" duration="3">
+        <h2 is-upgraded><strong>Log into Starburst</strong></h2>
+<p>Log into your Starburst Galaxy environment with the following configuration.</p>
+<ul>
+<li>Leverage a user in the <strong>accountadmin</strong> role.</li>
+<li>A cluster named <strong>aws-us-east-1-free</strong>.</li>
+<li>This cluster has a catalog named <strong>tmp_cat</strong> assigned to it.</li>
+</ul>
+<aside class="special"><p><strong>Note:</strong> The tutorial links in the <strong>Prerequisites</strong> section provide guides to set up such an environment. </p>
+<ul>
+<li>If your Starburst Galaxy environment has a cluster and/or catalog with a different name, be sure to adjust the instructions accordingly.</li>
+<li>If using Starburst Enterprise, use the name of your Iceberg catalog in place of <strong>tmp_cat</strong>.</li>
+</ul>
+</aside>
+<p>Navigate to <strong>Query</strong> &gt; <strong>Query editor</strong> from the left nav, open a new editor tab, name it <code>Iceberg v3</code>, and choose the <strong>aws-us-east-1-free</strong> cluster from the first pulldown menu.</p>
+<p class="image-container"><img style="width: 1848.00px" src="img/d4e7ceaaf9175027.png"></p>
+<h2 is-upgraded><strong>Create a schema</strong></h2>
+<p>Run the following SQL to create, and set the editor to use, a new schema.</p>
+<pre><code>CREATE schema tmp_cat.iceberg_v3;
+USE tmp_cat.iceberg_v3;</code></pre>
+<p>Notice the final pulldown shows the <strong>iceberg_v3</strong> schema is selected which will allow us to reference tables without the fully qualified <em>catalog_name.schema_name</em> prefix.</p>
+<p class="image-container"><img style="width: 302.00px" src="img/2a7a4e1b62ea13b8.png"></p>
+<h2 is-upgraded><strong>Verify Iceberg v3 is available</strong></h2>
+<p>Run the following SQL to create a test table and ensure it is using <code>format_version=3</code>.</p>
+<pre><code>CREATE TABLE quick_test
+WITH (type=&#39;iceberg&#39;, format_version=3)
+AS SELECT * FROM tpch.tiny.part;
+
+SHOW CREATE TABLE quick_test;</code></pre>
+<p class="image-container"><img style="width: 415.78px" src="img/7270db5e0797bc16.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Review v2 positional deletes" duration="4">
+        <h2 is-upgraded><strong>Create a testing table</strong></h2>
+<p>Run the following SQL to understand the data characteristics that will be used.</p>
+<pre><code>SELECT count(*) AS total_records, 
+       min(custkey) AS starting_id, 
+       max(custkey) AS ending_id
+  FROM tpch.tiny.customer;</code></pre>
+<p class="image-container"><img style="width: 1190.00px" src="img/513e08945e58f2eb.png"></p>
+<p>Notice that we will be focusing on 1500 rows of data that have surrogate key values ranging from 1 - 1500.</p>
+<p>This data size is very small and we want multiple underlying files, so run the following SQL to ensure that 3 data files are created; each with 500 rows.</p>
+<pre><code>CREATE TABLE cust_v2
+WITH (type=&#39;iceberg&#39;, format_version=2)
+AS SELECT * FROM tpch.tiny.customer
+    WHERE custkey &lt;= 500;
+
+INSERT INTO cust_v2
+  SELECT * FROM tpch.tiny.customer 
+   WHERE custkey BETWEEN 501 AND 1000;
+
+INSERT INTO cust_v2
+  SELECT * FROM tpch.tiny.customer 
+   WHERE custkey &gt; 1000;
+
+SELECT substring(file_path, length(file_path) - 20) 
+         AS end_of_file_name, 
+       file_format, record_count
+  FROM &#34;cust_v2$files&#34;;</code></pre>
+<p class="image-container"><img style="width: 1600.00px" src="img/1415f150a29129f4.png"></p>
+<h2 is-upgraded><strong>Delete some records</strong></h2>
+<p>Delete the 300 rows whose <code>custkey</code> values are multiples of 5.</p>
+<pre><code>DELETE FROM cust_v2
+ WHERE mod(custkey, 5) = 0;</code></pre>
+<p>Remember that there is a positional delete file created for each data file that contains records that need to be deleted. Each of the data files have their own 100 &#34;deletion markers&#34; recorded in the corresponding positional delete file. Run the same query as before to verify the underlying files to see the new positional delete files.</p>
+<pre><code>SELECT substring(file_path, length(file_path) - 20) 
+         AS end_of_file_name, 
+       file_format, record_count
+  FROM &#34;cust_v2$files&#34;;</code></pre>
+<p class="image-container"><img style="width: 1580.00px" src="img/868f25cbfd58616b.png"></p>
+<p>The bottom 3 files are the v2 positional delete files. One for each of the data files. Each referencing 100 records from the 300 total that have been deleted.</p>
+<h2 is-upgraded><strong>Delete some more</strong></h2>
+<p>Now, delete the 600 records whose customer keys are even numbers and list the <code>$files</code> metadata table again.</p>
+<pre><code>DELETE FROM cust_v2
+ WHERE mod(custkey, 2) = 0;</code></pre>
+<p class="image-container"><img style="width: 1590.00px" src="img/d3159a9b255ffe43.png"></p>
+<p>The middle 3 files are the next round of v2 positional delete files. Like before, one for each of the data files. Each referencing 200 records from the 600 total that have been deleted this time.</p>
+<h2 is-upgraded><strong>Delete EVEN more?</strong></h2>
+<p>Each time we run another <code>DELETE</code> command a new positional delete file will be created for each affected data file. This will continue to grow and sprawl until we can run a compaction to clean it all up.</p>
+<p>Let&#39;s see it!</p>
+<pre><code>DELETE FROM cust_v2
+ WHERE mod(custkey, 3) = 0;</code></pre>
+<p>Yep, another batch of delete files are created.</p>
+<p class="image-container"><img style="width: 1596.00px" src="img/d11d1fa566366903.png"></p>
+<h2 is-upgraded><strong>Compact the files</strong></h2>
+<p>Fortunately, the necessary compaction maintenance activity that focuses on rolling together many smaller files into fewer bigger ones comes to the rescue. This operation will be able to collapse these delete files as it does a logical merge of all the deletion markers contained within.</p>
+<pre><code>ALTER TABLE cust_v2 EXECUTE optimize;</code></pre>
+<p>Querying the <code>$files</code> metadata table yet again verifies this made a big difference.</p>
+<p class="image-container"><img style="width: 1588.00px" src="img/2e40c559cfdd8cad.png"></p>
+<p>In fact, the total number of records across these files equals 400 as it should be. This verifies that none of these Parquet files are delete files; each is a ‘normal&#39; data file.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Understand v3 deletion vectors" duration="4">
+        <h2 is-upgraded><strong>Create a testing table</strong></h2>
+<p>Like in the last step, create and populate a test table with the same 1500 rows across another set of 3 data files. This time we will set <code>format_version=3</code> to see the new deletion vector files improvements.</p>
+<pre><code>CREATE TABLE cust_v3
+WITH (type=&#39;iceberg&#39;, format_version=3)
+AS SELECT * FROM tpch.tiny.customer
+    WHERE custkey &lt;= 500;
+
+INSERT INTO cust_v3
+  SELECT * FROM tpch.tiny.customer 
+   WHERE custkey BETWEEN 501 AND 1000;
+
+INSERT INTO cust_v3
+  SELECT * FROM tpch.tiny.customer 
+   WHERE custkey &gt; 1000;
+
+SELECT substring(file_path, length(file_path) - 20) 
+         AS end_of_file_name, 
+       file_format, record_count
+  FROM &#34;cust_v3$files&#34;;</code></pre>
+<p class="image-container"><img style="width: 1730.00px" src="img/5c9768ef3810e62a.png"></p>
+<h2 is-upgraded><strong>Delete some records</strong></h2>
+<p>Let&#39;s do it again; delete the 300 rows whose customer keys are evenly divisible by 5, then query the $files metadata table.</p>
+<pre><code>DELETE FROM cust_v3
+ WHERE mod(custkey, 5) = 0;</code></pre>
+<p class="image-container"><img style="width: 1732.00px" src="img/8de65b1cb3575209.png"></p>
+<p>As before, the bottom 3 files represent the 300 records deleted. What is different is that these delete files are persisted as <a href="https://iceberg.apache.org/puffin-spec/" target="_blank">Puffin</a> files, not Parquet ones.</p>
+<h2 is-upgraded><strong>Delete some more</strong></h2>
+<p>Now, delete the 600 records with even numbers for their customer keys then list the <code>$files</code> metadata table again.</p>
+<pre><code>DELETE FROM cust_v3
+ WHERE mod(custkey, 2) = 0;</code></pre>
+<p class="image-container"><img style="width: 1730.00px" src="img/9ce1f1056750fbce.png"></p>
+<p>Notice that there are still only 3 deletion vector (Puffin) files. That&#39;s because the compute engine merged the contents of the previous 100 affected rows per file with the new change deleting another 200 rows. The deletion vectors now include pointers to the comprehensive 300 records for each of their associated 500 record data files.</p>
+<aside class="special"><p><strong>Note:</strong> If you look closely at the file names, you will see that these 3 deletion vector files are new files. Deletion vectors are still immutable and the older ones are needed for the prior snapshot of the table.</p>
+</aside>
+<h2 is-upgraded><strong>Delete EVEN more?</strong></h2>
+<p>For any new deletions aligned to a data file with an existing deletion vector file, the compute engine will merge the comprehensive contents into a new Puffin file. This approach keeps a smaller number of delete files around that need to be read when querying the table. It will prevent the delete file spawl that occurs in the v2 implementation.</p>
+<p>Show me!</p>
+<pre><code>DELETE FROM cust_v3
+ WHERE mod(custkey, 3) = 0;</code></pre>
+<p>As we previously witnessed, another set of comprehensive deletion vectors were created that span the rolling total of 1100 records deleted thus far. Fortunately, these are captured in 3 delete files instead of 9 with the v2 positional delete files.</p>
+<p class="image-container"><img style="width: 1728.00px" src="img/f0a5fc9c3cc60194.png"></p>
+<h2 is-upgraded><strong>Compact the files</strong></h2>
+<p>Fortunately, the necessary compaction maintenance activity that helped fold the v2 positional delete files also works with the new v2 deletion vector files.</p>
+<pre><code>ALTER TABLE cust_v3 EXECUTE optimize;</code></pre>
+<p class="image-container"><img style="width: 1734.00px" src="img/ee77a968e26a0dd0.png"></p>
+<p>As before, the total number of records across these files equals 400 and we see there are no Puffin files for this new snapshot.</p>
+<h2 is-upgraded><strong>Why do we care?</strong></h2>
+<p class="image-container"><img style="width: 1024.00px" src="img/eeb5e91cc775d244.png"></p>
+<p>With the sprawl of v2 positional delete files comes more and more file I/O which decreases performance and increases costs. The v3 deletion vector files ensure that for a given snapshot there will never be more than a single deletion file aligned to each data file. Performance doesn&#39;t keep degrading as more and more deletions occur and we prevent cost spikes for data lake solutions who charge on the number of GET operations.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Explore variant datatype" duration="8">
+        <h2 is-upgraded><strong>Simple example</strong></h2>
+<p>The connector&#39;s <a href="https://docs.starburst.io/latest/connector/iceberg.html#iceberg-to-trino-type-mapping" target="_blank">Iceberg to Trino type mapping</a> shows that Iceberg&#39;s <code>VARIANT</code> datatype corresponds to Trino&#39;s internal <code>JSON</code> type. This allows you to store and query semi-structured data in Iceberg tables while maintaining compatibility with Trino&#39;s SQL syntax.</p>
+<p>For example, when you create a table with a <code>JSON</code> column in Trino, the connector transparently maps it to a <code>VARIANT</code> column in Iceberg.</p>
+<pre><code>CREATE TABLE variant (data JSON)
+WITH (type=&#39;iceberg&#39;, format_version=3);
+
+INSERT INTO variant 
+  VALUES 
+    JSON &#39;{&#34;company&#34;: &#34;Starburst&#34;}&#39;, 
+    JSON &#39;{&#34;engine&#34;: &#34;Trino&#34;}&#39;;</code></pre>
+<p>Querying the table returns the JSON values as expected.</p>
+<p class="image-container"><img style="width: 356.00px" src="img/3f8c4fd679c6a3ee.png"></p>
+<h2 is-upgraded><strong>Internal representation</strong></h2>
+<p>While the query results look like regular JSON, the underlying Parquet files reveal that Iceberg represents the <code>VARIANT</code> type using <strong>two fields</strong>:</p>
+<ul>
+<li><strong>metadata</strong> – contains structural information, such as field names</li>
+<li><strong>value</strong> – contains the actual encoded data</li>
+</ul>
+<p>A simplified example of the internal Parquet structure looks like this:</p>
+<p class="image-container"><img style="width: 2048.00px" src="img/7c5c7369ab080f26.png"></p>
+<p>This encoding enables Iceberg to efficiently store and query semi-structured JSON data while maintaining flexible schema evolution AND multi-engine compatibility.</p>
+<h2 is-upgraded><strong>Richer example</strong></h2>
+<p>To explore the <code>VARIANT</code> datatype further, let&#39;s create a slightly more complex table. The following DDL has a couple of ‘normal&#39; structured columns and a single field to house some semi-structured data.</p>
+<pre><code>CREATE TABLE penpals 
+  (name varchar, status varchar, details JSON)
+WITH (type=&#39;iceberg&#39;, format_version=3);</code></pre>
+<p>Now, <code>INSERT</code> a few records into the new table that we can use in some more interesting queries.</p>
+<pre><code>INSERT INTO penpals 
+  VALUES 
+    (&#39;Amber &amp; Esmée (sisters)&#39;, &#39;swapping&#39;, JSON &#39;
+        { &#34;address&#34;: { &#34;recipient&#34;: &#34;Amber &amp; Esmée Toeter&#34;, 
+                       &#34;street&#34;: &#34;Westeinde 469&#34;, &#34;postal_code&#34;: &#34;7671EZ&#34;, &#34;city&#34;: &#34;Vriezenveen&#34;, 
+                       &#34;country&#34;: &#34;Netherlands&#34; },
+          &#34;socials&#34;: [ { &#34;app&#34;: &#34;Instagram&#34;, &#34;id&#34;: &#34;postsistersse03&#34; }, { &#34;app&#34;: &#34;Postcrossing&#34;, &#34;id&#34;: &#34;Amber00&#34; } ]
+        }
+    &#39;),
+    (&#39;Lester&#39;, &#39;swapping&#39;, JSON &#39;
+        { &#34;address&#34;: { &#34;recipient&#34;: &#34;Lester Martin&#34;,
+                       &#34;line1&#34;: &#34;5290 Matt Hwy&#34;, &#34;line2&#34;: &#34;Ste 502, Box 168&#34;, &#34;city&#34;: &#34;Cumming&#34;, &#34;state&#34;: &#34;GA&#34;, &#34;zip&#34;: &#34;30028&#34;, 
+                       &#34;country&#34;: &#34;USA&#34; },
+          &#34;email&#34;: &#34;lester.martin@gmail.com&#34;,
+          &#34;socials&#34;: [ { &#34;app&#34;: &#34;Instagram&#34;, &#34;id&#34;: &#34;lester_tx.postcards4swap&#34; }, { &#34;app&#34;: &#34;Postcrossing&#34;, &#34;id&#34;: &#34;Love2Kayak&#34; } ]
+        }
+    &#39;),
+    (&#39;Patricia&#39;, &#39;waiting&#39;, JSON &#39;
+        { &#34;socials&#34;: [ { &#34;app&#34;: &#34;PenPalWorld&#34;, &#34;id&#34;: &#34;11858644&#34; }, { &#34;app&#34;: &#34;Skype&#34;, &#34;id&#34;: &#34;erdeiszende17&#34; } ]
+        }
+    &#39;),
+    (&#39;Joe&#39;, &#39;overdue&#39;, JSON &#39;
+        { &#34;address&#34;: { &#34;recipient&#34;: &#34;Joe Schmoe&#34;,
+                       &#34;line1&#34;: &#34;123 Main St&#34;, &#34;city&#34;: &#34;Anytown&#34;, &#34;state&#34;: &#34;TX&#34;, &#34;zip&#34;: &#34;76179&#34;, 
+                       &#34;country&#34;: &#34;USA&#34; },
+          &#34;email&#34;: &#34;joe@schmoe.name&#34;,
+          &#34;socials&#34;: [ { &#34;app&#34;: &#34;Postcrossing&#34;, &#34;id&#34;: &#34;joeschmoe99&#34; }, { &#34;app&#34;: &#34;Facebook&#34;, &#34;id&#34;: &#34;joe99schmoe&#34; } ]
+        }
+    &#39;);</code></pre>
+<p>Take a few minutes to review the data in the DML above. Querying it shows it as JSON like before.</p>
+<p class="image-container"><img style="width: 1838.00px" src="img/f1dbe8f4b89642d0.png"></p>
+<h2 is-upgraded><strong>Explore top-level objects</strong></h2>
+<p>Reviewing the initial table population DML shows:</p>
+<ul>
+<li>2 of the records have top-level objects named <code>email</code> in the <code>details</code> semi-structured column.</li>
+<li>3 of the records have top-level objects named <code>address</code> and all of those have a value for its nested <code>country</code> property.</li>
+</ul>
+<p>Since Trino has a variety of <a href="https://trino.io/docs/current/functions/json.html" target="_blank">JSON functions and operators</a> we can interrogate those semi-structured data elements with a normal Trino query.</p>
+<pre><code>SELECT name, 
+       CAST(json_extract_scalar(details, &#39;$.email&#39;) AS varchar) AS email,
+       CAST(json_extract_scalar(details, &#39;$.address.country&#39;) AS varchar) AS country
+  FROM penpals;</code></pre>
+<p class="image-container"><img style="width: 1446.00px" src="img/fc9d757194bce7d8.png"></p>
+<p>Run the following query to find the 2 penpals who have an email address and live in the USA.</p>
+<pre><code>WITH a_few_fields AS (
+SELECT name, 
+       CAST(json_extract_scalar(details, &#39;$.email&#39;) AS varchar) AS email,
+       CAST(json_extract_scalar(details, &#39;$.address.country&#39;) AS varchar) AS country
+  FROM penpals
+)
+
+SELECT name, email FROM a_few_fields
+ WHERE country = &#39;USA&#39; AND email IS NOT null;</code></pre>
+<p class="image-container"><img style="width: 1062.00px" src="img/ea25f6555b517c75.png"></p>
+<aside class="special"><p><strong>Note:</strong> Lester is actually a snail-mail aficionado and if you send him a postcard he will be glad to send a postcard to you, too. Long live the <a href="https://www.postcrossing.com/" target="_blank">Postcrossers</a>!</p>
+</aside>
+<h2 is-upgraded><strong>Interrogate an array of objects</strong></h2>
+<p>Peering back at the <code>INSERT</code> statements shows that each <code>details</code> column includes an array named <code>socials</code> which contains objects for various social media apps that each person has accounts with. This next query focuses on the social media <code>app</code> and <code>id</code> values.</p>
+<pre><code>SELECT name,
+       json_extract(details, &#39;$.socials&#39;) AS socials
+  FROM penpals;</code></pre>
+<p class="image-container"><img style="width: 1730.00px" src="img/dd88536719b9f262.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> If you are like Patricia, be aware that <a href="https://support.microsoft.com/en-us/skype/skype-is-retiring-in-may-2025-what-you-need-to-know-2a7d2501-427f-485e-8be0-2068a9f90472" target="_blank">Skype has been retired</a>!!</p>
+</aside>
+<p>If we want to dig into this a bit deeper and find just folks who have an Instagram account we do have to wade into the wild &amp; mystical world of Trino querying. We could start out by unnesting the <code>social</code> array.</p>
+<pre><code>SELECT name, social
+  FROM (
+    SELECT
+      name,
+      CAST(json_extract(details, &#39;$.socials&#39;) AS ARRAY&lt;MAP&lt;varchar,varchar&gt;&gt;) AS socials
+    FROM penpals
+) 
+CROSS JOIN UNNEST(socials) AS socials(social);</code></pre>
+<p class="image-container"><img style="width: 1252.00px" src="img/d5901cbc6e196d2b.png"></p>
+<p>That&#39;s interesting, but we were looking for just Instagram accounts. <em>Come on in, the Trino SQL water feels fine!!</em></p>
+<pre><code>WITH unwound_socials AS (
+SELECT name,  
+       social[&#39;app&#39;] AS app_name, social[&#39;id&#39;] AS user_id
+  FROM (
+    SELECT
+      name,
+      CAST(json_extract(details, &#39;$.socials&#39;) AS ARRAY&lt;MAP&lt;varchar,varchar&gt;&gt;) AS socials
+    FROM penpals
+) 
+CROSS JOIN UNNEST(socials) AS socials(social)
+)
+
+SELECT name, user_id AS insta_id FROM unwound_socials
+ WHERE app_name = &#39;Instagram&#39;;</code></pre>
+<p class="image-container"><img style="width: 1036.00px" src="img/37f6a439173596df.png"></p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/59yrdnOQlYs?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<aside class="special"><p><strong>Note:</strong> If you do send Lester a postcard, feel free to pick out a card you&#39;d like in return from his insta account! 🙂 </p>
+</aside>
+<h2 is-upgraded><strong>Be kind to yourself (and others)</strong></h2>
+<p>In all fairness, that was a lot of SQL to get what we were looking for, but you wanted <code>VARIANT</code> and you didn&#39;t want to unwind it all out to a nice flat table so...</p>
+<p class="image-container"><img style="width: 461.00px" src="img/8284d875372cdec8.png"></p>
+<p>But seriously, you could wrap it all in a nice little view.</p>
+<pre><code>CREATE VIEW insta_users_vw AS 
+WITH unwound_socials AS (
+SELECT name,  
+       social[&#39;app&#39;] AS app_name, social[&#39;id&#39;] AS user_id
+  FROM (
+    SELECT
+      name,
+      CAST(json_extract(details, &#39;$.socials&#39;) AS ARRAY&lt;MAP&lt;varchar,varchar&gt;&gt;) AS socials
+    FROM penpals
+) 
+CROSS JOIN UNNEST(socials) AS socials(social)
+)
+
+SELECT name, user_id AS insta_id FROM unwound_socials
+ WHERE app_name = &#39;Instagram&#39;;</code></pre>
+<p class="image-container"><img style="width: 1292.00px" src="img/b4f3cd154b5c3448.png"></p>
+<p class="image-container"><img style="width: 600.00px" src="img/c64799e0ac2e70e2.png"></p>
+<aside class="special"><p><strong>Note:</strong> This view sounds like a good ‘dataset&#39; for a <a href="https://docs.starburst.io/starburst-galaxy/working-with-data/explore-data/browse-data-products.html" target="_blank">Data Product</a> if you ask me. </p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Additional datatype goodies" duration="3">
+        <p>There&#39;s more additions to datatypes than just the new <code>VARIANT</code> goodness. Let&#39;s hit on some of the new stuff.</p>
+<h2 is-upgraded><strong>Nanosecond timestamps</strong></h2>
+<p>Iceberg v3 introduces support for nanosecond precision timestamps and the <a href="https://docs.starburst.io/latest/connector/iceberg.html#iceberg-to-trino-type-mapping" target="_blank">Iceberg connector mappings</a> align these directly to Trino&#39;s <code>TIMESTAMP(9)</code> and <code>TIMESTAMP(9) WITH TIME ZONE</code> datatypes. </p>
+<p>Check out what happens today in Iceberg v2 tables.</p>
+<pre><code>CREATE TABLE timestamp_nanos_v2 (data TIMESTAMP(9))
+WITH (type=&#39;iceberg&#39;, format_version=2);
+
+INSERT INTO timestamp_nanos_v2 
+  VALUES TIMESTAMP &#39;2025-08-21 12:34:56.123456789&#39;;
+
+SELECT * FROM timestamp_nanos_v2;</code></pre>
+<p>Look closely at the output below and you&#39;ll see it gets rounded at the microsecond level.</p>
+<p class="image-container"><img style="width: 412.00px" src="img/bea51b2587311cba.png"></p>
+<p>Iceberg v3 can persist data down to the nanosecond level.</p>
+<pre><code>CREATE TABLE timestamp_nanos_v3 (data TIMESTAMP(9))
+WITH (type=&#39;iceberg&#39;, format_version=3);
+
+INSERT INTO timestamp_nanos_v3 
+  VALUES TIMESTAMP &#39;2025-08-21 12:34:56.123456789&#39;;
+
+SELECT * FROM timestamp_nanos_v3;</code></pre>
+<p class="image-container"><img style="width: 454.00px" src="img/656089610d2368a5.png"></p>
+<p>This ensures that applications can capture events with extremely high precision — down to the nanosecond — which is valuable in use cases such as financial transactions, scientific measurements, or system event logging.</p>
+<h2 is-upgraded><strong>Default column values</strong></h2>
+<p>Sure... traditional RDBMSs have had default column values for decades, but we did get them for Iceberg in 2025. Let&#39;s create a table with this new option and to try it out.</p>
+<pre><code>CREATE TABLE default_column (
+    id int,
+    data varchar DEFAULT &#39;bob&#39;
+)
+WITH(type=&#39;iceberg&#39;, format_version=3);</code></pre>
+<p>Now, when you insert rows, you can either provide a value for data explicitly or omit it and let Iceberg assign the default.</p>
+<pre><code>INSERT INTO default_column VALUES (1, &#39;alice&#39;);
+INSERT INTO default_column (id) VALUES (2);</code></pre>
+<p>Querying the table shows the expected behavior.</p>
+<pre><code>SELECT * FROM default_column;</code></pre>
+<p class="image-container"><img style="width: 294.00px" src="img/9cbf4bdc0fdcd849.png"></p>
+<p>It also works when adding a new column, but it does NOT backfill the existing records&#39; null column value.<br></p>
+<pre><code>ALTER TABLE default_column 
+ADD COLUMN birthday DATE DEFAULT DATE &#39;2025-06-02&#39;;
+INSERT INTO default_column (id, data) VALUES (3, &#39;charlie&#39;);
+SELECT * FROM default_column;</code></pre>
+<p class="image-container"><img style="width: 872.00px" src="img/2c758896335b1fac.png"></p>
+<p>This feature helps simplify schema design and reduces the need for application-side logic to handle missing values.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Discover row lineage" duration="6">
+        <p>Iceberg v3 introduces row lineage, a feature that can be used to build incremental materialized views in the future. The connector adds new metadata columns that make it easier to track the lifecycle of rows over time. These columns are automatically available and require no schema changes:</p>
+<ul>
+<li><code>$row_id</code>: An implicit, unique row identifier that is automatically assigned when a row is created.</li>
+<li><code>$last_updated_sequence_number</code>: A sequence number that indicates the last time a row was updated.</li>
+</ul>
+<p>This feature allows you to reason about row versioning and lineage directly from queries.</p>
+<h2 is-upgraded><strong>v2 confusion</strong></h2>
+<p>To help see the confusion that exists with Iceberg v2, let&#39;s create a table with some records in it to test with.</p>
+<pre><code>-- create table with custkeys 100-103
+CREATE TABLE cust_without_rowids 
+WITH (type=&#39;iceberg&#39;, format_version=2)
+AS SELECT (custkey + 99) AS custkey, comment from tpch.tiny.customer where custkey &lt; 5;
+
+SELECT * FROM cust_without_rowids ORDER BY custkey;</code></pre>
+<p class="image-container"><img style="width: 1044.00px" src="img/b35ae98d21473ff5.png"></p>
+<p>For now, run the following SQL statements without reviewing them.</p>
+<pre><code>-- don&#39;t look at what is happening here...
+UPDATE cust_without_rowids SET custkey = 104 WHERE custkey = 100;
+DELETE FROM cust_without_rowids WHERE custkey IN (101,102);
+UPDATE cust_without_rowids SET custkey = 105 WHERE custkey = 103;
+INSERT INTO cust_without_rowids VALUES 
+  (106, &#39;requests deposits accounts plateletes, ironicde final&#39;), 
+  (107, &#39;accounts birthday epitash squashing foxes above town&#39;);
+
+-- looks like all 4 were deleted and 4 new records were added
+SELECT * FROM cust_without_rowids ORDER BY custkey;</code></pre>
+<p>As the comments above suggest, it initially looks like the original 4 rows (customer keys 100 - 103) were deleted and 4 new rows were added (customer keys 104 - 107).</p>
+<p class="image-container"><img style="width: 970.00px" src="img/f3754d3eef6483de.png"></p>
+<p>Just looking at the before and after data table values, it is not clear what really happened.</p>
+<p class="image-container"><img style="width: 419.00px" src="img/3dcd350ba08a0ff7.png"></p>
+<p>In actuality, the following changes were made.</p>
+<ul>
+<li>2 rows were updated (customer keys 100 and 103 became 104 and 105, respectively)</li>
+<li>2 rows were deleted (customer keys 101 and 102)</li>
+<li>2 rows were added (customer keys 106 and 107)</li>
+</ul>
+<p>We can do some &#34;interesting&#34; things like the following (you would need to swap in your initial and final snapshot IDs) to start down the path of sorting this out, <strong>but DON&#39;T!</strong></p>
+<pre><code>(SELECT custkey FROM cust_without_rowids FOR VERSION AS OF 5452915122954318146
+EXCEPT
+SELECT custkey FROM cust_without_rowids FOR VERSION AS OF 8920509937939341340)
+UNION ALL
+(SELECT custkey FROM cust_without_rowids FOR VERSION AS OF 8920509937939341340
+EXCEPT
+SELECT custkey FROM cust_without_rowids FOR VERSION AS OF 5452915122954318146);</code></pre>
+<p>Again, don&#39;t mess with that as v3 just might save us!</p>
+<p class="image-container"><img style="width: 640.00px" src="img/959ca5c15fab7f90.png"></p>
+<h2 is-upgraded><strong>v3 insight</strong></h2>
+<p>Well, maybe it v3&#39;s row lineage isn&#39;t Superman (or even Joey), but it can help make some sense out of all of this. Let&#39;s set up a table like we did before to test with.</p>
+<pre><code>-- create table with custkeys 100-103
+CREATE TABLE cust_with_rowids 
+WITH (type=&#39;iceberg&#39;, format_version=3)
+AS SELECT (custkey + 99) AS custkey, comment from tpch.tiny.customer where custkey &lt; 5;
+
+-- see custkeys 100-103 AND some other cool things
+SELECT custkey, &#34;$row_id&#34;, &#34;$last_updated_sequence_number&#34;
+  FROM cust_with_rowids ORDER BY custkey;</code></pre>
+<p class="image-container"><img style="width: 1356.00px" src="img/3e3731188dd9a582.png"></p>
+<p>Yes, we have the same original customer key values, but now we have <code>$row_id</code> and <code>$last_updated_sequence_number</code> as well. </p>
+<p>As explained at the beginning of this step, these columns are automatically available and require no schema changes:</p>
+<ul>
+<li><code>$row_id</code>: An implicit, unique row identifier that is automatically assigned when a row is created.</li>
+<li><code>$last_updated_sequence_number</code>: A sequence number that indicates the last time a row was updated.</li>
+</ul>
+<p>All 4 records were added in the initial sequence number of changes.</p>
+<p>Now, let&#39;s run the same operations as before, but look a bit closer this time. Take note of the additional comments regarding what is actually happening and the sequence numbers that are being tracked behind the scenes.</p>
+<pre><code>-- make some changes as earlier, but note the sequences of mods
+
+-- SEQ# 2
+UPDATE cust_with_rowids SET custkey = 104 WHERE custkey = 100;
+
+-- SEQ# 3
+DELETE FROM cust_with_rowids WHERE custkey IN (101,102);
+
+-- SEQ# 4
+UPDATE cust_with_rowids SET custkey = 105 WHERE custkey = 103;
+
+-- SEQ# 5
+INSERT INTO cust_with_rowids VALUES 
+  (106, &#39;requests deposits accounts plateletes, ironicde final&#39;), 
+  (107, &#39;accounts birthday epitash squashing foxes above town&#39;);</code></pre>
+<p>Query the v3 table again to see if these additional metadata columns help explain what happened.</p>
+<pre><code>-- look at row_id to see that the early DML was actually run as seen by 
+
+--  row_id 0 and 3 (orig custkey 100 &amp; 103) where UPDATED
+--      SEQ# 2 &amp; SEQ# 4
+--  row_id 1 and 2 (orig custkey 101 &amp; 102) where DELETED
+--      not seen, but still SEQ# 3
+--  row_id 6 and 7 (custkey 7 &amp; 8) where INSERTED
+--      SEQ# 5
+SELECT custkey, &#34;$row_id&#34;, &#34;$last_updated_sequence_number&#34; 
+  FROM cust_with_rowids ORDER BY &#34;$row_id&#34;;</code></pre>
+<p class="image-container"><img style="width: 1390.00px" src="img/ab05c1be0dac4166.png"></p>
+<p><em>I know... </em><strong>clear as mud! </strong>Let&#39;s unpack what happened in the bullets and visualization below by looking at the row ID values.</p>
+<ul>
+<li>Row IDs 0 and 3 were updated</li>
+<li>Row IDs 1 and 2 were deleted (present in the visual below to aid in understanding)</li>
+<li>Row IDs 6 and 7 were added</li>
+</ul>
+<p class="image-container"><img style="width: 969.00px" src="img/b391f666972ccf81.png"></p>
+<p>In addition to being a foundational change for building incremental materialized views in the future, row lineage is beneficial for other features such as the following.</p>
+<ul>
+<li>Auditing row-level changes</li>
+<li>Debugging data pipelines</li>
+<li>Building slowly-changing dimension (SCD) tables</li>
+<li>Tracking row versions across snapshots</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Environment tear-down" duration="2">
+        <aside class="special"><p><strong>Note:</strong> This section assumes you created a catalog named <code>tmp_cat</code> as described in <a href="https://devcenter.starburst.io/tutorials/configure-a-starburst-galaxy-data-lake-catalog-and-schema" target="_blank">Configure a Starburst Galaxy data lake catalog and schema</a>. The first section of that tutorial states the following.</p>
+<p><em>All data contained in the S3 bucket used in this tutorial is deleted every 24 hours. For this reason, we recommend deleting the catalog after you have finished using it for the day. You can recreate the catalog on another day if needed.</em></p>
+<p><strong><em>If you have a different configuration than described above, you can skip this entire section. </em></strong></p>
+</aside>
+<h2 is-upgraded><strong>Delete the schema</strong></h2>
+<p>Run the following SQL to remove the schema and all the objects within it. This will also clear up the object store files that were created during this tutorial.</p>
+<pre><code>DROP SCHEMA iceberg_v3 CASCADE;</code></pre>
+<h2 is-upgraded><strong>Update the cluster</strong></h2>
+<p>Click on <strong>Admin</strong> &gt; <strong>Clusters</strong> from the left nav.</p>
+<p class="image-container"><img style="width: 293.47px" src="img/ee940c77483a3b4.png"></p>
+<p>Find the <code>aws-us-east-1-free</code> cluster in the presented list and click on the vertical ellipsis menu icon on the far right of this row. In the menu that surfaces, click on <strong>Edit cluster</strong>. </p>
+<p class="image-container"><img style="width: 1850.00px" src="img/822c7de9da61e162.png"></p>
+<p>In the <strong>Edit cluster</strong> configuration screen, click on the <strong>Catalogs</strong> pulldown menu.</p>
+<p class="image-container"><img style="width: 447.99px" src="img/d71c931c9c9493bf.png"></p>
+<p>Uncheck the box on the for the <code>tmp_cat (us-east-1)</code> item in the list that surfaces, then click on <strong>Save changes</strong>.</p>
+<p class="image-container"><img style="width: 2048.00px" src="img/2bbd845acd6b127e.png"></p>
+<h2 is-upgraded><strong>Remove the catalog</strong></h2>
+<p>Navigate to <strong>Data</strong> &gt; <strong>Catalogs</strong> from the left nav to see the list of <strong>Catalogs</strong>. Type <code>tmp_cat</code> in the search box to trim the list to only this catalog. Click on the cluster name link.</p>
+<p class="image-container"><img style="width: 1750.00px" src="img/1af6cd5b404a66cb.png"></p>
+<p>Click on the vertical ellipsis menu icon and choose <strong>Delete catalog</strong>.</p>
+<p class="image-container"><img style="width: 1764.00px" src="img/e0010b1de9b93fc9.png"></p>
+<p>Follow the on-screen instructions to enable, and click, the <strong>Yes, delete</strong> button.</p>
+<p class="image-container"><img style="width: 567.50px" src="img/b5f17c5359c066ad.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Tutorial wrap-up" duration="1">
+        <p>Congratulations, you&#39;ve completed the <strong>Exploring Iceberg v3 with Starburst </strong>tutorial!</p>
+<h2 is-upgraded><strong>What you </strong><strong>learned</strong></h2>
+<ul>
+<li>The difference between v2 positional delete files and v3 deletion vectors.</li>
+<li>How to leverage the <code>VARIANT</code> data type in your tables.</li>
+<li>How to utilize nanosecond precision timestamp columns.</li>
+<li>How to create and alter tables with default column values.</li>
+<li>An understanding of how row lineage works and can be useful.</li>
+</ul>
+<h2 is-upgraded><strong>What&#39;s next?</strong></h2>
+<p>Check out some of these codelabs...</p>
+<ul>
+<li><a href="https://devcenter.starburst.io/tutorials/create-and-populate-apache-iceberg-tables" target="_blank">Create and populate Iceberg tables</a></li>
+<li><a href="https://devcenter.starburst.io/tutorials/explore-data-modifications-snapshots-and-time-travel-with-apache-iceberg" target="_blank">Explore data modifications, snapshots, and time travel with Apache Iceberg</a></li>
+<li><a href="https://devcenter.starburst.io/tutorials/explore-advanced-features-of-apache-iceberg" target="_blank">Explore advanced features of Apache Iceberg</a> </li>
+</ul>
+<h2 is-upgraded><strong>Further reading</strong></h2>
+<ul>
+<li><a href="https://www.starburst.io/blog/iceberg-v3/" target="_blank">Iceberg v3 + Starburst</a></li>
+<li><a href="https://medium.com/towards-data-engineering/apache-iceberg-v3-unifying-the-data-lakehouse-ecosystem-7ce3e7bd9193" target="_blank">Apache Iceberg v3: Unifying the Data Lakehouse Ecosystem | by THE BRICK LEARNING | Towards Data Engineering | Medium</a> </li>
+<li><a href="https://medium.com/@kaushikranjan/row-lineage-in-apache-iceberg-7f2412ea27c0" target="_blank">Row Lineage in Apache Iceberg</a> </li>
+</ul>
+<h2 is-upgraded><strong>Reference docs</strong></h2>
+<ul>
+<li><a href="https://iceberg.apache.org/spec/#version-3-extended-types-and-capabilities" target="_blank">Iceberg Table Spec</a></li>
+<li><a href="https://docs.starburst.io/starburst-galaxy/data-engineering/working-with-data-lakes/table-formats/gl-iceberg.html" target="_blank">Starburst | Iceberg table format</a> </li>
+<li><a href="https://docs.starburst.io/latest/connector/iceberg.html" target="_blank">Iceberg connector — Starburst Enterprise</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
