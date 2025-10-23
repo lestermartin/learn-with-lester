@@ -29,8 +29,8 @@
                   feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_trino-iceberg-v3">
     
       <google-codelab-step label="Tutorial overview" duration="1">
-        <p><strong>Last Updated:</strong> 2025-10-17</p>
-<p class="image-container"><img style="width: 740.00px" src="img/11e102a3c1e2bbb2.png"></p>
+        <p><strong>Last Updated:</strong> 2025-10-23</p>
+<p class="image-container"><img style="width: 740.00px" src="img/e7d3557243f5c981.png"></p>
 <h2 is-upgraded><strong>Background</strong></h2>
 <p>This <strong>Exploring Iceberg v3 with Starburst</strong> tutorial assumes you are conceptually familiar with <a href="https://iceberg.apache.org/" target="_blank">Apache Iceberg</a> as a modern table format and with using <a href="https://trino.io/" target="_blank">Trino</a> as a query engine. Additionally, it is assumed you have some awareness of the new Iceberg features that have surfaced in version 3 of the specification as summarized in <a href="https://www.starburst.io/blog/iceberg-v3/" target="_blank">Iceberg v3 + Starburst</a>. </p>
 <h2 is-upgraded><strong>Scope of the tutorial</strong></h2>
@@ -51,6 +51,9 @@
 </ul>
 <aside class="special"><p><strong>Note:</strong> With appropriate alterations, this lab can also be exercised with an instance of <a href="https://www.starburst.io/starburst-enterprise/" target="_blank">Starburst Enterprise</a> (Release <a href="https://docs.starburst.io/latest//release/release-476-e.html" target="_blank">476-e</a> or later) configured with a <a href="https://docs.starburst.io/latest/connector/iceberg.html" target="_blank">Starburst Iceberg connector</a>.</p>
 </aside>
+<h2 is-upgraded><strong>Tutorial video</strong></h2>
+<p>As an option, you can watch a video version of this tutorial.</p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/rnVPEnoim3E?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
       </google-codelab-step>
@@ -70,13 +73,13 @@
 </ul>
 </aside>
 <p>Navigate to <strong>Query</strong> &gt; <strong>Query editor</strong> from the left nav, open a new editor tab, name it <code>Iceberg v3</code>, and choose the <strong>aws-us-east-1-free</strong> cluster from the first pulldown menu.</p>
-<p class="image-container"><img style="width: 1848.00px" src="img/d4e7ceaaf9175027.png"></p>
+<p class="image-container"><img style="width: 1848.00px" src="img/7de69b2f284652ce.png"></p>
 <h2 is-upgraded><strong>Create a schema</strong></h2>
 <p>Run the following SQL to create, and set the editor to use, a new schema.</p>
 <pre><code>CREATE schema tmp_cat.iceberg_v3;
 USE tmp_cat.iceberg_v3;</code></pre>
 <p>Notice the final pulldown shows the <strong>iceberg_v3</strong> schema is selected which will allow us to reference tables without the fully qualified <em>catalog_name.schema_name</em> prefix.</p>
-<p class="image-container"><img style="width: 302.00px" src="img/2a7a4e1b62ea13b8.png"></p>
+<p class="image-container"><img style="width: 302.00px" src="img/23bf1175c359295d.png"></p>
 <h2 is-upgraded><strong>Verify Iceberg v3 is available</strong></h2>
 <p>Run the following SQL to create a test table and ensure it is using <code>format_version=3</code>.</p>
 <pre><code>CREATE TABLE quick_test
@@ -84,7 +87,7 @@ WITH (type=&#39;iceberg&#39;, format_version=3)
 AS SELECT * FROM tpch.tiny.part;
 
 SHOW CREATE TABLE quick_test;</code></pre>
-<p class="image-container"><img style="width: 415.78px" src="img/7270db5e0797bc16.png"></p>
+<p class="image-container"><img style="width: 415.78px" src="img/d3783b89081eea8.png"></p>
 
 
       </google-codelab-step>
@@ -96,7 +99,7 @@ SHOW CREATE TABLE quick_test;</code></pre>
        min(custkey) AS starting_id, 
        max(custkey) AS ending_id
   FROM tpch.tiny.customer;</code></pre>
-<p class="image-container"><img style="width: 1190.00px" src="img/513e08945e58f2eb.png"></p>
+<p class="image-container"><img style="width: 1190.00px" src="img/d37ccd861d2cba77.png"></p>
 <p>Notice that we will be focusing on 1500 rows of data that have surrogate key values ranging from 1 - 1500.</p>
 <p>This data size is very small and we want multiple underlying files, so run the following SQL to ensure that 3 data files are created; each with 500 rows.</p>
 <pre><code>CREATE TABLE cust_v2
@@ -116,7 +119,7 @@ SELECT substring(file_path, length(file_path) - 20)
          AS end_of_file_name, 
        file_format, record_count
   FROM &#34;cust_v2$files&#34;;</code></pre>
-<p class="image-container"><img style="width: 1600.00px" src="img/1415f150a29129f4.png"></p>
+<p class="image-container"><img style="width: 1600.00px" src="img/539ad9d6675aa06c.png"></p>
 <h2 is-upgraded><strong>Delete some records</strong></h2>
 <p>Delete the 300 rows whose <code>custkey</code> values are multiples of 5.</p>
 <pre><code>DELETE FROM cust_v2
@@ -126,13 +129,13 @@ SELECT substring(file_path, length(file_path) - 20)
          AS end_of_file_name, 
        file_format, record_count
   FROM &#34;cust_v2$files&#34;;</code></pre>
-<p class="image-container"><img style="width: 1580.00px" src="img/868f25cbfd58616b.png"></p>
+<p class="image-container"><img style="width: 1580.00px" src="img/a14909bf4ed43821.png"></p>
 <p>The bottom 3 files are the v2 positional delete files. One for each of the data files. Each referencing 100 records from the 300 total that have been deleted.</p>
 <h2 is-upgraded><strong>Delete some more</strong></h2>
 <p>Now, delete the 600 records whose customer keys are even numbers and list the <code>$files</code> metadata table again.</p>
 <pre><code>DELETE FROM cust_v2
  WHERE mod(custkey, 2) = 0;</code></pre>
-<p class="image-container"><img style="width: 1590.00px" src="img/d3159a9b255ffe43.png"></p>
+<p class="image-container"><img style="width: 1590.00px" src="img/5de5f7087af346eb.png"></p>
 <p>The middle 3 files are the next round of v2 positional delete files. Like before, one for each of the data files. Each referencing 200 records from the 600 total that have been deleted this time.</p>
 <h2 is-upgraded><strong>Delete EVEN more?</strong></h2>
 <p>Each time we run another <code>DELETE</code> command a new positional delete file will be created for each affected data file. This will continue to grow and sprawl until we can run a compaction to clean it all up.</p>
@@ -140,12 +143,12 @@ SELECT substring(file_path, length(file_path) - 20)
 <pre><code>DELETE FROM cust_v2
  WHERE mod(custkey, 3) = 0;</code></pre>
 <p>Yep, another batch of delete files are created.</p>
-<p class="image-container"><img style="width: 1596.00px" src="img/d11d1fa566366903.png"></p>
+<p class="image-container"><img style="width: 1596.00px" src="img/60a8bf9fcd7fa417.png"></p>
 <h2 is-upgraded><strong>Compact the files</strong></h2>
 <p>Fortunately, the necessary compaction maintenance activity that focuses on rolling together many smaller files into fewer bigger ones comes to the rescue. This operation will be able to collapse these delete files as it does a logical merge of all the deletion markers contained within.</p>
 <pre><code>ALTER TABLE cust_v2 EXECUTE optimize;</code></pre>
 <p>Querying the <code>$files</code> metadata table yet again verifies this made a big difference.</p>
-<p class="image-container"><img style="width: 1588.00px" src="img/2e40c559cfdd8cad.png"></p>
+<p class="image-container"><img style="width: 1588.00px" src="img/c867dcecbf0ca7cd.png"></p>
 <p>In fact, the total number of records across these files equals 400 as it should be. This verifies that none of these Parquet files are delete files; each is a ‘normal&#39; data file.</p>
 
 
@@ -171,18 +174,18 @@ SELECT substring(file_path, length(file_path) - 20)
          AS end_of_file_name, 
        file_format, record_count
   FROM &#34;cust_v3$files&#34;;</code></pre>
-<p class="image-container"><img style="width: 1730.00px" src="img/5c9768ef3810e62a.png"></p>
+<p class="image-container"><img style="width: 1730.00px" src="img/ec630b98ff24489c.png"></p>
 <h2 is-upgraded><strong>Delete some records</strong></h2>
 <p>Let&#39;s do it again; delete the 300 rows whose customer keys are evenly divisible by 5, then query the $files metadata table.</p>
 <pre><code>DELETE FROM cust_v3
  WHERE mod(custkey, 5) = 0;</code></pre>
-<p class="image-container"><img style="width: 1732.00px" src="img/8de65b1cb3575209.png"></p>
+<p class="image-container"><img style="width: 1732.00px" src="img/62f04a819ea7df1e.png"></p>
 <p>As before, the bottom 3 files represent the 300 records deleted. What is different is that these delete files are persisted as <a href="https://iceberg.apache.org/puffin-spec/" target="_blank">Puffin</a> files, not Parquet ones.</p>
 <h2 is-upgraded><strong>Delete some more</strong></h2>
 <p>Now, delete the 600 records with even numbers for their customer keys then list the <code>$files</code> metadata table again.</p>
 <pre><code>DELETE FROM cust_v3
  WHERE mod(custkey, 2) = 0;</code></pre>
-<p class="image-container"><img style="width: 1730.00px" src="img/9ce1f1056750fbce.png"></p>
+<p class="image-container"><img style="width: 1730.00px" src="img/470e5186b780a8c9.png"></p>
 <p>Notice that there are still only 3 deletion vector (Puffin) files. That&#39;s because the compute engine merged the contents of the previous 100 affected rows per file with the new change deleting another 200 rows. The deletion vectors now include pointers to the comprehensive 300 records for each of their associated 500 record data files.</p>
 <aside class="special"><p><strong>Note:</strong> If you look closely at the file names, you will see that these 3 deletion vector files are new files. Deletion vectors are still immutable and the older ones are needed for the prior snapshot of the table.</p>
 </aside>
@@ -192,14 +195,14 @@ SELECT substring(file_path, length(file_path) - 20)
 <pre><code>DELETE FROM cust_v3
  WHERE mod(custkey, 3) = 0;</code></pre>
 <p>As we previously witnessed, another set of comprehensive deletion vectors were created that span the rolling total of 1100 records deleted thus far. Fortunately, these are captured in 3 delete files instead of 9 with the v2 positional delete files.</p>
-<p class="image-container"><img style="width: 1728.00px" src="img/f0a5fc9c3cc60194.png"></p>
+<p class="image-container"><img style="width: 1728.00px" src="img/9bb09a4dafbbc131.png"></p>
 <h2 is-upgraded><strong>Compact the files</strong></h2>
-<p>Fortunately, the necessary compaction maintenance activity that helped fold the v2 positional delete files also works with the new v2 deletion vector files.</p>
+<p>Fortunately, the necessary compaction maintenance activity that helped fold the v2 positional delete files also works with the new v3 deletion vector files.</p>
 <pre><code>ALTER TABLE cust_v3 EXECUTE optimize;</code></pre>
-<p class="image-container"><img style="width: 1734.00px" src="img/ee77a968e26a0dd0.png"></p>
+<p class="image-container"><img style="width: 1734.00px" src="img/504cd43f93d13d2d.png"></p>
 <p>As before, the total number of records across these files equals 400 and we see there are no Puffin files for this new snapshot.</p>
 <h2 is-upgraded><strong>Why do we care?</strong></h2>
-<p class="image-container"><img style="width: 1024.00px" src="img/eeb5e91cc775d244.png"></p>
+<p class="image-container"><img style="width: 1024.00px" src="img/39dc2925c39d8098.png"></p>
 <p>With the sprawl of v2 positional delete files comes more and more file I/O which decreases performance and increases costs. The v3 deletion vector files ensure that for a given snapshot there will never be more than a single deletion file aligned to each data file. Performance doesn&#39;t keep degrading as more and more deletions occur and we prevent cost spikes for data lake solutions who charge on the number of GET operations.</p>
 
 
@@ -217,7 +220,7 @@ INSERT INTO variant
     JSON &#39;{&#34;company&#34;: &#34;Starburst&#34;}&#39;, 
     JSON &#39;{&#34;engine&#34;: &#34;Trino&#34;}&#39;;</code></pre>
 <p>Querying the table returns the JSON values as expected.</p>
-<p class="image-container"><img style="width: 356.00px" src="img/3f8c4fd679c6a3ee.png"></p>
+<p class="image-container"><img style="width: 356.00px" src="img/4e5d340380cedeec.png"></p>
 <h2 is-upgraded><strong>Internal representation</strong></h2>
 <p>While the query results look like regular JSON, the underlying Parquet files reveal that Iceberg represents the <code>VARIANT</code> type using <strong>two fields</strong>:</p>
 <ul>
@@ -225,7 +228,7 @@ INSERT INTO variant
 <li><strong>value</strong> – contains the actual encoded data</li>
 </ul>
 <p>A simplified example of the internal Parquet structure looks like this:</p>
-<p class="image-container"><img style="width: 2048.00px" src="img/7c5c7369ab080f26.png"></p>
+<p class="image-container"><img style="width: 2048.00px" src="img/4b4696d3683028e6.png"></p>
 <p>This encoding enables Iceberg to efficiently store and query semi-structured JSON data while maintaining flexible schema evolution AND multi-engine compatibility.</p>
 <h2 is-upgraded><strong>Richer example</strong></h2>
 <p>To explore the <code>VARIANT</code> datatype further, let&#39;s create a slightly more complex table. The following DDL has a couple of ‘normal&#39; structured columns and a single field to house some semi-structured data.</p>
@@ -263,7 +266,7 @@ WITH (type=&#39;iceberg&#39;, format_version=3);</code></pre>
         }
     &#39;);</code></pre>
 <p>Take a few minutes to review the data in the DML above. Querying it shows it as JSON like before.</p>
-<p class="image-container"><img style="width: 1838.00px" src="img/f1dbe8f4b89642d0.png"></p>
+<p class="image-container"><img style="width: 1838.00px" src="img/47177644e3ed538.png"></p>
 <h2 is-upgraded><strong>Explore top-level objects</strong></h2>
 <p>Reviewing the initial table population DML shows:</p>
 <ul>
@@ -275,7 +278,7 @@ WITH (type=&#39;iceberg&#39;, format_version=3);</code></pre>
        CAST(json_extract_scalar(details, &#39;$.email&#39;) AS varchar) AS email,
        CAST(json_extract_scalar(details, &#39;$.address.country&#39;) AS varchar) AS country
   FROM penpals;</code></pre>
-<p class="image-container"><img style="width: 1446.00px" src="img/fc9d757194bce7d8.png"></p>
+<p class="image-container"><img style="width: 1446.00px" src="img/f9c93e6c6e7282f9.png"></p>
 <p>Run the following query to find the 2 penpals who have an email address and live in the USA.</p>
 <pre><code>WITH a_few_fields AS (
 SELECT name, 
@@ -286,7 +289,7 @@ SELECT name,
 
 SELECT name, email FROM a_few_fields
  WHERE country = &#39;USA&#39; AND email IS NOT null;</code></pre>
-<p class="image-container"><img style="width: 1062.00px" src="img/ea25f6555b517c75.png"></p>
+<p class="image-container"><img style="width: 1062.00px" src="img/8d53967f583d2181.png"></p>
 <aside class="special"><p><strong>Note:</strong> Lester is actually a snail-mail aficionado and if you send him a postcard he will be glad to send a postcard to you, too. Long live the <a href="https://www.postcrossing.com/" target="_blank">Postcrossers</a>!</p>
 </aside>
 <h2 is-upgraded><strong>Interrogate an array of objects</strong></h2>
@@ -294,7 +297,7 @@ SELECT name, email FROM a_few_fields
 <pre><code>SELECT name,
        json_extract(details, &#39;$.socials&#39;) AS socials
   FROM penpals;</code></pre>
-<p class="image-container"><img style="width: 1730.00px" src="img/dd88536719b9f262.png"></p>
+<p class="image-container"><img style="width: 1730.00px" src="img/71979e13e9d11a07.png"></p>
 <aside class="warning"><p><strong>Caution:</strong> If you are like Patricia, be aware that <a href="https://support.microsoft.com/en-us/skype/skype-is-retiring-in-may-2025-what-you-need-to-know-2a7d2501-427f-485e-8be0-2068a9f90472" target="_blank">Skype has been retired</a>!!</p>
 </aside>
 <p>If we want to dig into this a bit deeper and find just folks who have an Instagram account we do have to wade into the wild &amp; mystical world of Trino querying. We could start out by unnesting the <code>social</code> array.</p>
@@ -306,7 +309,7 @@ SELECT name, email FROM a_few_fields
     FROM penpals
 ) 
 CROSS JOIN UNNEST(socials) AS socials(social);</code></pre>
-<p class="image-container"><img style="width: 1252.00px" src="img/d5901cbc6e196d2b.png"></p>
+<p class="image-container"><img style="width: 1252.00px" src="img/4dd63c2439670d4b.png"></p>
 <p>That&#39;s interesting, but we were looking for just Instagram accounts. <em>Come on in, the Trino SQL water feels fine!!</em></p>
 <pre><code>WITH unwound_socials AS (
 SELECT name,  
@@ -322,13 +325,13 @@ CROSS JOIN UNNEST(socials) AS socials(social)
 
 SELECT name, user_id AS insta_id FROM unwound_socials
  WHERE app_name = &#39;Instagram&#39;;</code></pre>
-<p class="image-container"><img style="width: 1036.00px" src="img/37f6a439173596df.png"></p>
+<p class="image-container"><img style="width: 1036.00px" src="img/505b015be1792460.png"></p>
 <iframe class="youtube-video" src="https://www.youtube.com/embed/59yrdnOQlYs?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 <aside class="special"><p><strong>Note:</strong> If you do send Lester a postcard, feel free to pick out a card you&#39;d like in return from his insta account! 🙂 </p>
 </aside>
 <h2 is-upgraded><strong>Be kind to yourself (and others)</strong></h2>
 <p>In all fairness, that was a lot of SQL to get what we were looking for, but you wanted <code>VARIANT</code> and you didn&#39;t want to unwind it all out to a nice flat table so...</p>
-<p class="image-container"><img style="width: 461.00px" src="img/8284d875372cdec8.png"></p>
+<p class="image-container"><img style="width: 461.00px" src="img/fcd15e7a938052ca.png"></p>
 <p>But seriously, you could wrap it all in a nice little view.</p>
 <pre><code>CREATE VIEW insta_users_vw AS 
 WITH unwound_socials AS (
@@ -345,8 +348,8 @@ CROSS JOIN UNNEST(socials) AS socials(social)
 
 SELECT name, user_id AS insta_id FROM unwound_socials
  WHERE app_name = &#39;Instagram&#39;;</code></pre>
-<p class="image-container"><img style="width: 1292.00px" src="img/b4f3cd154b5c3448.png"></p>
-<p class="image-container"><img style="width: 600.00px" src="img/c64799e0ac2e70e2.png"></p>
+<p class="image-container"><img style="width: 1292.00px" src="img/2500beab0022fce.png"></p>
+<p class="image-container"><img style="width: 600.00px" src="img/98055248cb0fbc70.png"></p>
 <aside class="special"><p><strong>Note:</strong> This view sounds like a good ‘dataset&#39; for a <a href="https://docs.starburst.io/starburst-galaxy/working-with-data/explore-data/browse-data-products.html" target="_blank">Data Product</a> if you ask me. </p>
 </aside>
 
@@ -366,7 +369,7 @@ INSERT INTO timestamp_nanos_v2
 
 SELECT * FROM timestamp_nanos_v2;</code></pre>
 <p>Look closely at the output below and you&#39;ll see it gets rounded at the microsecond level.</p>
-<p class="image-container"><img style="width: 412.00px" src="img/bea51b2587311cba.png"></p>
+<p class="image-container"><img style="width: 412.00px" src="img/c930bea3505e99fd.png"></p>
 <p>Iceberg v3 can persist data down to the nanosecond level.</p>
 <pre><code>CREATE TABLE timestamp_nanos_v3 (data TIMESTAMP(9))
 WITH (type=&#39;iceberg&#39;, format_version=3);
@@ -375,7 +378,7 @@ INSERT INTO timestamp_nanos_v3
   VALUES TIMESTAMP &#39;2025-08-21 12:34:56.123456789&#39;;
 
 SELECT * FROM timestamp_nanos_v3;</code></pre>
-<p class="image-container"><img style="width: 454.00px" src="img/656089610d2368a5.png"></p>
+<p class="image-container"><img style="width: 454.00px" src="img/9b9ff35720184595.png"></p>
 <p>This ensures that applications can capture events with extremely high precision — down to the nanosecond — which is valuable in use cases such as financial transactions, scientific measurements, or system event logging.</p>
 <h2 is-upgraded><strong>Default column values</strong></h2>
 <p>Sure... traditional RDBMSs have had default column values for decades, but we did get them for Iceberg in 2025. Let&#39;s create a table with this new option and to try it out.</p>
@@ -389,13 +392,13 @@ WITH(type=&#39;iceberg&#39;, format_version=3);</code></pre>
 INSERT INTO default_column (id) VALUES (2);</code></pre>
 <p>Querying the table shows the expected behavior.</p>
 <pre><code>SELECT * FROM default_column;</code></pre>
-<p class="image-container"><img style="width: 294.00px" src="img/9cbf4bdc0fdcd849.png"></p>
+<p class="image-container"><img style="width: 294.00px" src="img/d16aa6b0b2100535.png"></p>
 <p>It also works when adding a new column, but it does NOT backfill the existing records&#39; null column value.<br></p>
 <pre><code>ALTER TABLE default_column 
 ADD COLUMN birthday DATE DEFAULT DATE &#39;2025-06-02&#39;;
 INSERT INTO default_column (id, data) VALUES (3, &#39;charlie&#39;);
 SELECT * FROM default_column;</code></pre>
-<p class="image-container"><img style="width: 872.00px" src="img/2c758896335b1fac.png"></p>
+<p class="image-container"><img style="width: 872.00px" src="img/5c62b57ca2bc03be.png"></p>
 <p>This feature helps simplify schema design and reduces the need for application-side logic to handle missing values.</p>
 
 
@@ -416,7 +419,7 @@ WITH (type=&#39;iceberg&#39;, format_version=2)
 AS SELECT (custkey + 99) AS custkey, comment from tpch.tiny.customer where custkey &lt; 5;
 
 SELECT * FROM cust_without_rowids ORDER BY custkey;</code></pre>
-<p class="image-container"><img style="width: 1044.00px" src="img/b35ae98d21473ff5.png"></p>
+<p class="image-container"><img style="width: 1044.00px" src="img/76c60b2e765f8707.png"></p>
 <p>For now, run the following SQL statements without reviewing them.</p>
 <pre><code>-- don&#39;t look at what is happening here...
 UPDATE cust_without_rowids SET custkey = 104 WHERE custkey = 100;
@@ -429,9 +432,9 @@ INSERT INTO cust_without_rowids VALUES
 -- looks like all 4 were deleted and 4 new records were added
 SELECT * FROM cust_without_rowids ORDER BY custkey;</code></pre>
 <p>As the comments above suggest, it initially looks like the original 4 rows (customer keys 100 - 103) were deleted and 4 new rows were added (customer keys 104 - 107).</p>
-<p class="image-container"><img style="width: 970.00px" src="img/f3754d3eef6483de.png"></p>
+<p class="image-container"><img style="width: 970.00px" src="img/d680b5c22bffc866.png"></p>
 <p>Just looking at the before and after data table values, it is not clear what really happened.</p>
-<p class="image-container"><img style="width: 419.00px" src="img/3dcd350ba08a0ff7.png"></p>
+<p class="image-container"><img style="width: 419.00px" src="img/f2dc9d9c749eb861.png"></p>
 <p>In actuality, the following changes were made.</p>
 <ul>
 <li>2 rows were updated (customer keys 100 and 103 became 104 and 105, respectively)</li>
@@ -447,7 +450,7 @@ UNION ALL
 EXCEPT
 SELECT custkey FROM cust_without_rowids FOR VERSION AS OF 5452915122954318146);</code></pre>
 <p>Again, don&#39;t mess with that as v3 just might save us!</p>
-<p class="image-container"><img style="width: 640.00px" src="img/959ca5c15fab7f90.png"></p>
+<p class="image-container"><img style="width: 640.00px" src="img/47bcaa8d33081749.png"></p>
 <h2 is-upgraded><strong>v3 insight</strong></h2>
 <p>Well, maybe it v3&#39;s row lineage isn&#39;t Superman (or even Joey), but it can help make some sense out of all of this. Let&#39;s set up a table like we did before to test with.</p>
 <pre><code>-- create table with custkeys 100-103
@@ -458,7 +461,7 @@ AS SELECT (custkey + 99) AS custkey, comment from tpch.tiny.customer where custk
 -- see custkeys 100-103 AND some other cool things
 SELECT custkey, &#34;$row_id&#34;, &#34;$last_updated_sequence_number&#34;
   FROM cust_with_rowids ORDER BY custkey;</code></pre>
-<p class="image-container"><img style="width: 1356.00px" src="img/3e3731188dd9a582.png"></p>
+<p class="image-container"><img style="width: 1356.00px" src="img/b1a72c20eab9ae3e.png"></p>
 <p>Yes, we have the same original customer key values, but now we have <code>$row_id</code> and <code>$last_updated_sequence_number</code> as well. </p>
 <p>As explained at the beginning of this step, these columns are automatically available and require no schema changes:</p>
 <ul>
@@ -493,14 +496,14 @@ INSERT INTO cust_with_rowids VALUES
 --      SEQ# 5
 SELECT custkey, &#34;$row_id&#34;, &#34;$last_updated_sequence_number&#34; 
   FROM cust_with_rowids ORDER BY &#34;$row_id&#34;;</code></pre>
-<p class="image-container"><img style="width: 1390.00px" src="img/ab05c1be0dac4166.png"></p>
+<p class="image-container"><img style="width: 1390.00px" src="img/aca7255b6a37c085.png"></p>
 <p><em>I know... </em><strong>clear as mud! </strong>Let&#39;s unpack what happened in the bullets and visualization below by looking at the row ID values.</p>
 <ul>
 <li>Row IDs 0 and 3 were updated</li>
 <li>Row IDs 1 and 2 were deleted (present in the visual below to aid in understanding)</li>
 <li>Row IDs 6 and 7 were added</li>
 </ul>
-<p class="image-container"><img style="width: 969.00px" src="img/b391f666972ccf81.png"></p>
+<p class="image-container"><img style="width: 969.00px" src="img/5251bae1ea19737a.png"></p>
 <p>In addition to being a foundational change for building incremental materialized views in the future, row lineage is beneficial for other features such as the following.</p>
 <ul>
 <li>Auditing row-level changes</li>
@@ -522,20 +525,20 @@ SELECT custkey, &#34;$row_id&#34;, &#34;$last_updated_sequence_number&#34;
 <pre><code>DROP SCHEMA iceberg_v3 CASCADE;</code></pre>
 <h2 is-upgraded><strong>Update the cluster</strong></h2>
 <p>Click on <strong>Admin</strong> &gt; <strong>Clusters</strong> from the left nav.</p>
-<p class="image-container"><img style="width: 293.47px" src="img/ee940c77483a3b4.png"></p>
+<p class="image-container"><img style="width: 293.47px" src="img/9480b4a56ebc474f.png"></p>
 <p>Find the <code>aws-us-east-1-free</code> cluster in the presented list and click on the vertical ellipsis menu icon on the far right of this row. In the menu that surfaces, click on <strong>Edit cluster</strong>. </p>
-<p class="image-container"><img style="width: 1850.00px" src="img/822c7de9da61e162.png"></p>
+<p class="image-container"><img style="width: 1850.00px" src="img/fc30d7fa4e049947.png"></p>
 <p>In the <strong>Edit cluster</strong> configuration screen, click on the <strong>Catalogs</strong> pulldown menu.</p>
-<p class="image-container"><img style="width: 447.99px" src="img/d71c931c9c9493bf.png"></p>
+<p class="image-container"><img style="width: 447.99px" src="img/5232a5a573d6e7ca.png"></p>
 <p>Uncheck the box on the for the <code>tmp_cat (us-east-1)</code> item in the list that surfaces, then click on <strong>Save changes</strong>.</p>
-<p class="image-container"><img style="width: 2048.00px" src="img/2bbd845acd6b127e.png"></p>
+<p class="image-container"><img style="width: 2048.00px" src="img/d58b6ee7f49aaaf9.png"></p>
 <h2 is-upgraded><strong>Remove the catalog</strong></h2>
 <p>Navigate to <strong>Data</strong> &gt; <strong>Catalogs</strong> from the left nav to see the list of <strong>Catalogs</strong>. Type <code>tmp_cat</code> in the search box to trim the list to only this catalog. Click on the cluster name link.</p>
-<p class="image-container"><img style="width: 1750.00px" src="img/1af6cd5b404a66cb.png"></p>
+<p class="image-container"><img style="width: 1750.00px" src="img/4ed2c1de883d4a62.png"></p>
 <p>Click on the vertical ellipsis menu icon and choose <strong>Delete catalog</strong>.</p>
-<p class="image-container"><img style="width: 1764.00px" src="img/e0010b1de9b93fc9.png"></p>
+<p class="image-container"><img style="width: 1764.00px" src="img/f82e4ef2e99923e4.png"></p>
 <p>Follow the on-screen instructions to enable, and click, the <strong>Yes, delete</strong> button.</p>
-<p class="image-container"><img style="width: 567.50px" src="img/b5f17c5359c066ad.png"></p>
+<p class="image-container"><img style="width: 567.50px" src="img/ed7c33b22d1d7731.png"></p>
 
 
       </google-codelab-step>
