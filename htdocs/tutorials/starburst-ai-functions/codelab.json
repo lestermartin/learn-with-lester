@@ -1,0 +1,27 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2025-12-08T21:33:27Z",
+  "id": "starburst-ai-functions",
+  "duration": 30,
+  "title": "Utilizing SQL-based AI functions with Starburst",
+  "authors": "Lester Martin",
+  "summary": "In this codelab, you will utilize LLM features and functions on Starburst Galaxy using SQL.",
+  "source": "16Hz-oQA9CdDmWtOsKMGbl6JUNtvw9uTLzz_ZU2a0g3Y",
+  "theme": "tutorial",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "tutorial"
+  ],
+  "tags": [
+    "kiosk",
+    "web"
+  ],
+  "feedback": "mailto:lester.martin@gmail.com?subject=Tutorial_starburst-ai-functions",
+  "ga": "G-0ZJ67JQPFE",
+  "url": "starburst-ai-functions"
+}

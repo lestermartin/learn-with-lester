@@ -1,0 +1,481 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Utilizing SQL-based AI functions with Starburst</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid="G-0ZJ67JQPFE"
+                  codelab-ga4id=""
+                  id="starburst-ai-functions"
+                  title="Utilizing SQL-based AI functions with Starburst"
+                  environment="web"
+                  feedback-link="mailto:lester.martin@gmail.com?subject=Tutorial_starburst-ai-functions">
+    
+      <google-codelab-step label="Tutorial overview" duration="1">
+        <p><strong>Last Updated:</strong> 2025-12-08</p>
+<p class="image-container"><img style="width: 1328.00px" src="img/b2c1792fb1d363a4.png"></p>
+<h2 is-upgraded><strong>Background</strong></h2>
+<p>This <strong>Utilizing SQL-based AI functions with Starburst</strong> tutorial assumes you are conceptually familiar with <a href="https://en.wikipedia.org/wiki/Large_language_model" target="_blank">LLM</a>s, <a href="https://www.datacamp.com/blog/vector-embedding" target="_blank">vector embeddings</a>, and <a href="https://en.wikipedia.org/wiki/Retrieval-augmented_generation" target="_blank">RAG</a>. The following video is an appropriate primer for this tutorial.</p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/_4bs4QTQvKk?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<h2 is-upgraded><strong>Scope</strong><strong> of the tutorial</strong></h2>
+<p>In this tutorial, you will learn by example how Starburst integrates with popular AI models to leverage the power of LLMs with SQL. You will learn a variety of specialized tasks and implement the RAG pattern. You will use Starburst Galaxy as the environment for this exploration.</p>
+<h2 is-upgraded><strong>Learning </strong><strong>objectives</strong></h2>
+<p>Once you&#39;ve completed this tutorial, you will be able to:</p>
+<ul>
+<li>Configure LLM and embedding AI models in the Starburst UI.</li>
+<li>Use AI task functions for sentiment analysis, classification, grammar correction, text masking, and translation needs.</li>
+<li>Leverage the AI embedding function to create vector embeddings from text.</li>
+<li>Alter an Iceberg table to store vector embeddings within.</li>
+<li>Build a simple RAG workflow leveraging Iceberg tables and Starburst AI functions.</li>
+</ul>
+<h2 is-upgraded><strong>Prerequisites</strong></h2>
+<ul>
+<li>Access to a <a href="https://www.starburst.io/starburst-galaxy/" target="_blank">Starburst Galaxy</a> environment; see <a href="https://devcenter.starburst.io/tutorials/starburst-galaxy-getting-started" target="_blank">Starburst Galaxy: Getting started</a>.</li>
+<li>A data lake catalog configured with write access to an underlying object store; see <a href="https://devcenter.starburst.io/tutorials/configure-a-starburst-galaxy-data-lake-catalog-and-schema" target="_blank">Configure a Starburst Galaxy data lake catalog and schema</a>. </li>
+<li>A valid <a href="https://platform.openai.com/docs/quickstart" target="_blank">OpenAI API key from OpenAI</a>, or any OpenAI compatible service; see <a href="https://platform.openai.com/docs/quickstart" target="_blank">Developer quickstart - OpenAI API</a>. <em>AWS Bedrock models are also supported in Starburst Galaxy, but not leveraged in this tutorial.</em></li>
+</ul>
+<aside class="special"><p><strong>Note:</strong> With appropriate alterations, this lab can also be exercised with an instance of <a href="https://www.starburst.io/starburst-enterprise/" target="_blank">Starburst Enterprise</a> that supports <a href="https://docs.starburst.io/latest/starburst-ai/functions-ai.html" target="_blank">AI functions</a>.</p>
+</aside>
+<h2 is-upgraded><strong>Tutorial video</strong></h2>
+<p>As an option, you can watch a video version of this tutorial.</p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/sX-FFyyw9Tw?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prepare the environment" duration="2">
+        <h2 is-upgraded><strong>Log into Starburst</strong></h2>
+<p>Log into your Starburst Galaxy environment with the following configuration.</p>
+<ul>
+<li>Leverage a user in the <strong>accountadmin</strong> role.</li>
+<li>A cluster named <strong>aws-us-east-1-free</strong>.</li>
+<li>This cluster has a catalog named <strong>tmp_cat</strong> assigned to it.</li>
+</ul>
+<aside class="special"><p><strong>Note:</strong> The tutorial links in the <strong>Prerequisites</strong> section provide guides to set up such an environment. </p>
+<ul>
+<li>If your Starburst Galaxy environment has a cluster and/or catalog with a different name, be sure to adjust the instructions accordingly.</li>
+<li>If using Starburst Enterprise, use the name of your Iceberg catalog in place of <strong>tmp_cat</strong>.</li>
+</ul>
+</aside>
+<p>Navigate to <strong>Query</strong> &gt; <strong>Query editor</strong> from the left nav, open a new editor tab, name it <code>AI functions</code>, and choose the <strong>aws-us-east-1-free</strong> cluster from the first pulldown menu.</p>
+<p class="image-container"><img style="width: 1898.00px" src="img/a6339f2e75aabee9.png"></p>
+<h2 is-upgraded><strong>Create a schema</strong></h2>
+<p>Run the following SQL to create, and set the editor to use, a new schema.</p>
+<pre><code>CREATE schema tmp_cat.ai_functions;
+USE tmp_cat.ai_functions;</code></pre>
+<p>Notice the final pulldown shows the <strong>ai_functions</strong> schema is selected which will allow us to reference tables without the fully qualified <em>catalog_name.schema_name</em> prefix.</p>
+<p class="image-container"><img style="width: 302.00px" src="img/4fe171a8eecc2054.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Configure AI models" duration="3">
+        <p>Select <strong>AI models</strong> from the left nav and then click on <strong>Connect to an external model</strong>.</p>
+<p class="image-container"><img style="width: 2048.00px" src="img/bac83e98581b2b9c.png"></p>
+<p>This presents a simple input form.</p>
+<p class="image-container"><img style="width: 1310.00px" src="img/8616100eccf63ec7.png"></p>
+<h2 is-upgraded><strong>Configure an embedding model</strong></h2>
+<p>Select <code>Open AI & Open AI API Compatible</code> for <strong>Model integration</strong> and <code>Embedding</code> for <strong>Model type</strong>. For <strong>Model ID</strong> enter a valid model such as <code>text-embedding-3-small</code>.</p>
+<p class="image-container"><img style="width: 710.00px" src="img/7946034479f7508a.png"></p>
+<p>Set the <strong>Model alias</strong> to <code>ai_functions_embeding</code> and optionally add a <strong>Description</strong>.</p>
+<p class="image-container"><img style="width: 730.00px" src="img/63cfd3d8ee09cb7f.png"></p>
+<p>Leave the <strong>OpenAI endpoint</strong> to its default value and enter your <strong>OpenAI API key</strong> value.</p>
+<p class="image-container"><img style="width: 1154.00px" src="img/603e238a10249600.png"></p>
+<p>Press the <strong>Test connection</strong> button at the lower right of the configuration screen to see the following confirmation message.</p>
+<p class="image-container"><img style="width: 964.00px" src="img/559d5e2968356f8.png"></p>
+<p>Press the <strong>Create</strong> button to then see the newly created model in the <strong>AI models</strong> list.</p>
+<p class="image-container"><img style="width: 316.96px" src="img/826eb1fffabd03c8.png"></p>
+<h2 is-upgraded><strong>Configure an LLM model</strong></h2>
+<p>Using the <strong>Connect to an external model</strong> button again, then select <code>Open AI & Open AI API Compatible</code> for <strong>Model integration</strong> and <code>LLM</code> for <strong>Model type</strong>. For <strong>Model ID</strong> enter a valid model such as <code>gpt-5-nano-2025-08-07</code>. Enter <code>ai_functions_gpt5</code> for the <strong>Model alias</strong> and paste in your <strong>OpenAI API key</strong> value.</p>
+<p class="image-container"><img style="width: 1934.00px" src="img/35e11534cad2429e.png"></p>
+<p>Press the <strong>Test connection</strong> button and after the confirmation message is presented, press the <strong>Create</strong> button to then see the newly created model in the <strong>AI models</strong> list.</p>
+<p class="image-container"><img style="width: 1266.00px" src="img/cdd774758b7d386d.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="AI functions" duration="5">
+        <p>As you can see from <a href="https://docs.starburst.io/starburst-galaxy/ai-workflows/ai-functions.html" target="_blank">Starburst | AI functions</a> the functions are broken into 3 categories.</p>
+<ul>
+<li><strong>Task functions</strong> such as analyzing sentiment, classification, fixing grammar, masking text, and translating languages. </li>
+<li><strong>Embedding functions</strong> are all about creating mathematical representations of text that can be clumped together near similar text (see my video back in the overview step).</li>
+<li><strong>Prompt functions</strong> — well, there really is only one function. It is called <code>prompt()</code> and it does what it sounds like; you can send in an input prompt and get a response back from an LLM (think ChatGPT) with the answer.</li>
+</ul>
+<h2 is-upgraded><strong>Submit a prompt</strong></h2>
+<p>Let&#39;s ask a very important question.</p>
+<pre><code>SELECT starburst.ai.prompt(
+    &#39;What underlying tech does Starburst use?&#39;,
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1620.00px" src="img/ce8f8ab4b8441325.png"></p>
+<aside class="special"><p><strong>Note:</strong> If you have other LLMs configured, you can replace their alias with the second argument to the <code>prompt()</code> function.</p>
+</aside>
+<h2 is-upgraded><strong>Explore the task functions</strong></h2>
+<p>Since Trino / Starburst users are familiar with SQL and possibly haven&#39;t seen themselves as ‘prompt engineers&#39;, a library of built-in, pre-tested functions was created that work with any configured LLM. Let&#39;s explore them.</p>
+<h3 is-upgraded>Sentiment analysis</h3>
+<p>Verify a very obvious positive statement.</p>
+<pre><code>SELECT starburst.ai.analyze_sentiment(
+    &#39;I love Starburst&#39;,
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 160.00px" src="img/aa03ce9c98dec20f.png"></p>
+<p>Let&#39;s be a bit more wordy to make sure it is doing a good job.</p>
+<pre><code>SELECT starburst.ai.analyze_sentiment(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;,
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 160.00px" src="img/aa03ce9c98dec20f.png"></p>
+<h3 is-upgraded>Classification</h3>
+<p>If this was sent to me in email would my spam detector flag it?</p>
+<pre><code>SELECT starburst.ai.classify(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;,
+    ARRAY[&#39;spam&#39;, &#39;not spam&#39;], 
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 198.00px" src="img/9d10abbffa869d46.png"></p>
+<p>You can try other classifications and number of options. What does the LLM think about the verbosity of this writer?</p>
+<pre><code>SELECT starburst.ai.classify(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;,
+    ARRAY[&#39;cursory&#39;, &#39;average&#39;, &#39;exhaustive&#39;], 
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 196.00px" src="img/81ee055c8142452a.png"></p>
+<h3 is-upgraded>Identify and correct grammatical errors</h3>
+<p>Image a column with some free form text that you might want to clean up a bit. </p>
+<pre><code>SELECT starburst.ai.fix_grammar(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;,
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1140.00px" src="img/4237364de3e46124.png"></p>
+<h3 is-upgraded>Language translations</h3>
+<p>Convert the text to Chinese as used in Taiwan.</p>
+<pre><code>SELECT starburst.ai.translate(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;,
+    &#39;zh-TW&#39;, &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1150.00px" src="img/1a2121aa719d131f.png"></p>
+<p>You could even chain functions together to do something like correcting the grammar from the source text and then converting that to Spanish.</p>
+<pre><code>SELECT starburst.ai.translate(starburst.ai.fix_grammar(
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;, 
+    &#39;ai_functions_gpt5&#39;), &#39;es&#39;, &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1142.00px" src="img/ff189e39e704f198.png"></p>
+<p>As this would likely call the LLM twice, you would almost certainly have faster performance with less cost by customizing the prompt directly. Here&#39;s one simple ‘prompt engineering&#39; approach.</p>
+<pre><code>SELECT starburst.ai.prompt(concat(
+    &#39;Correct the grammar and spelling in the following text, and then translate the corrected text into Spanish. Here is the text: &#39;,
+    &#39;Trino/Presto/Athena whatever the branding is, is the most impressive data processing technology I have seen in my career. The only downside is that SQL is its only interface, but honestly I love it so much. I have been lucky enough to meet some of engineers that worked on it and they are some of the best engineers I have met in my career. If I was going to a Greenfield project, I would 100% want this as the main part of our stack.&#39;),    
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1176.00px" src="img/653bfb9cd1490274.png"></p>
+<aside class="warning"><p><strong>Caution:</strong> Notice that even though the same LLM is used as before, the initial grammar fix is slightly different than determined earlier. This likely accounts for the slightly different translation output, but there is no guarantee that the translation would be the same even if it had the same initial text. This is because LLM technologies are <a href="https://www.dpadvisors.ca/post/the-basics-of-probabilistic-vs-deterministic-ai-what-you-need-to-know" target="_blank">probabilistic and not deterministic</a>, thus the same output is not guaranteed with the same input.</p>
+</aside>
+<h3 is-upgraded>Data masking</h3>
+<p>Starburst&#39;s built-in access controls already include the ability to define <a href="https://docs.starburst.io/starburst-galaxy/security-and-compliance/manage-data-access/access-control-policy-types.html#column-masks" target="_blank">column masks</a>, but this is only useful on structured data. The AI functions come to the rescue when you need to apply masks to data in free-form text.</p>
+<p>Let&#39;s try it with some text containing an address and phone number. </p>
+<pre><code>SELECT starburst.ai.mask(
+    &#39;Contact me at 555-1234 or visit us at 123 Main St.&#39;,
+    ARRAY[&#39;phone&#39;, &#39;address&#39;], 
+    &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 668.00px" src="img/199db38b82d600a3.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="RAG use case &amp; test data" duration="3">
+        <p>Imagine if you will that the cartoon character <a href="https://en.wikipedia.org/wiki/Fred_Flintstone" target="_blank">Fred Flintstone</a> was keeping a personal diary.</p>
+<p class="image-container"><img style="width: 1348.00px" src="img/d05836f345c7e7b7.png"></p>
+<h2 is-upgraded><strong>Our use case</strong></h2>
+<p>If we asked things of a public LLM about Fred&#39;s interests or experiences that are only in this diary, we will not get an accurate answer. For example, I happen to know Fred, like <a href="https://www.postcrossing.com/user/Love2Kayak" target="_blank">me</a>, is an active <a href="https://www.postcrossing.com/" target="_blank">Postcrossing</a> member and sends/receives postcards all over the world.</p>
+<p>Let&#39;s see what happens if we ask an LLM if he likes &#34;snail mail&#34;.</p>
+<aside class="special"><p><strong>Note:</strong></p>
+<p class="image-container"><img style="width: 380.87px" src="img/a41f2133d7c52a6a.png"></p>
+</aside>
+<pre><code>SELECT starburst.ai.prompt(
+  &#39;Does Fred Flintstone like to send and receive mail?&#39;,
+  &#39;ai_functions_gpt5&#39;);</code></pre>
+<p class="image-container"><img style="width: 1146.00px" src="img/5bc2a5e8f56119a0.png"></p>
+<p>It doesn&#39;t seem that the LLM knows about Fred&#39;s personal thoughts on the matter.</p>
+<h2 is-upgraded><strong>His journal</strong></h2>
+<p>Fred uses his stone-aged mobile device <em>(hey, he&#39;s a fictional character so why not give him cellular service and internet access!)</em> to record his journal entries. The good news for this tutorial is that we can just pick up at the point where there is an <a href="https://iceberg.apache.org/" target="_blank">Apache Iceberg</a> table that holds all the entries <em>(was there an ice-age in the middle of the stone-age?)</em>.</p>
+<pre><code>-- create a table for diary entries
+CREATE TABLE diary_entries (
+    owner varchar,
+    entry_date timestamp,
+    entry_text varchar
+);
+show create table diary_entries;</code></pre>
+<p class="image-container"><img style="width: 966.00px" src="img/7d20c997909c802e.png"></p>
+<aside class="special"><p><strong>Note: </strong>If you want to learn more about Iceberg v3, be sure to check out <a href="https://lestermartin.dev/tutorials/trino-iceberg-v3/" target="_blank">Exploring Iceberg v3 with Starburst</a>.</p>
+</aside>
+<p>Let&#39;s populate the table with some sample journal entries that we can use for testing.</p>
+<pre><code>-- add initial entries 
+INSERT INTO diary_entries (owner, entry_date, entry_text)
+VALUES
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -99, current_timestamp), &#39;It is a new year and today I decided to start keeping a diary. Some may imagine that life is pretty boring here in Bedrock, but my family and friends make sure life is NEVER boring! As today is a Monday, I&#39;&#39;m off to work at the quarry. I work there everyday until 5pm. Despite it being physical work, I do enjoy it. I was happy to play with Dino after work.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -98, current_timestamp), &#39;Ok, keeping a diary is something I&#39;&#39;ll need to get used to. It seems I missed yesterday, but I&#39;&#39;m still here. It is mid-week and I&#39;&#39;m finally jotting down my notes this Wednesday evening. Barney and I just got back from our Loyal Order of Water Buffaloes meeting. Barney is running for Vice President this year and I fully support him.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -97, current_timestamp), &#39;Ahh... the weekend is finally here. I&#39;&#39;ve been so busy (and well... I guess I simply forgot as well) to enter my thoughts into my daily journal. Off to the drive in movie tonight.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -96, current_timestamp), &#39;The weekends always go so fast. Family &amp; friends continue to be the thing I spend my time on. I&#39;&#39;m thinking I need a new hobby, too.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -95, current_timestamp), &#39;I have decided to try sending &amp; receiving postcards as a new hobby. I found this website called Postcrossings that looks pretty interesting. The site says that over 800,000 people enjoy this hobby. Postcrossers, that&#39;&#39;s what these hobbyists are called, have sent over 78 million postcards so far.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -94, current_timestamp), &#39;I was able to send 3 postcards today to people the system provided addresses to me for. This really is the hobby for me.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -93, current_timestamp), &#39;Fun Thursday night getting 2 more postcards in the mail.  I am loving this hobby even though Wilma thinks I&#39;&#39;m nuts.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -92, current_timestamp), &#39;I went hiking over the weekend for one of my existing hobbies; waterfall viewing. I saw two of the largest ones in Bedrock; Big Falls and Prettybig Falls. I was even able to buy a few postcards at the gift shop.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -91, current_timestamp), &#39;I had so much fun looking at waterfalls that I visited the artificial one we have at the mall; Shopping Shoal. Silly name, but I did find out that shoals were usually rocks in rough water that paddlers enjoy traversing through.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -90, current_timestamp), &#39;This   was   a    second   journal entry for Jan 15. It shows    some   extra   spacing    that can    be cleaned up.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -89, current_timestamp), &#39;Woke up, fell out of bed. Dragged a comb across my head. Found my way downstairs and drank a cup and looking up, I noticed I was late. Found my coat and grabbed my hat. Made the bus in seconds flat. Found my way upstairs and had a smoke and somebody spoke and I went into a dream.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -88, current_timestamp), &#39;Woke up, fell out of bed. Dragged a comb across my head. Found my way downstairs and drank a cup and looking up, I noticed I was late. Found my coat and grabbed my hat. Made the bus in seconds flat. Found my way upstairs and had a smoke and somebody spoke and I went into a dream.&#39;),
+  (&#39;Fred Flintstone&#39;, date_add(&#39;day&#39;, -87, current_timestamp), &#39;These last days have been a complete blur. So busy just life that I haven&#39;&#39;t been able to focus on my new hobby of mailing postcards.&#39;);
+select * from diary_entries;</code></pre>
+<p class="image-container"><img style="width: 2048.00px" src="img/a2f31b856d362e85.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Vector embeddings" duration="4">
+        <p>A large component of many comprehensive RAG applications is the ETL pipeline that prepares data to be <strong><em>retrieved</em></strong> that can be then used to <strong><em>augment</em></strong> an LLM prompt. As <a href="https://lestermartin.blog/2025/02/24/unstructured-docs-in-ai-the-wild-west/" target="_blank">unstructured docs in ai (the wild west)</a> points out, these pipelines can get rather complicated, rather quickly, depending on the input data. </p>
+<p>Fortunately, our simple use case didn&#39;t need to <em>parse</em> any unstructured data and the values in the <code>entry_text</code> column are appropriately <em>chunked</em> for the RAG workflow we are going to build. We just need to create <em>vector embeddings</em> of these journal entries and persist them somewhere.</p>
+<p><em>If you are confused about any of the RAG terminology used above, please watch the following video.</em></p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/_4bs4QTQvKk?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<h2 is-upgraded><strong>Add a column for the embeddings</strong></h2>
+<p>We need a place to store the vector embeddings. You could always use a purpose-built vector database, but for this tutorial we will store them &#34;lakeside&#34;. This means as a column in our Iceberg table. Let&#39;s add a column for them to be persisted.</p>
+<pre><code>-- prep to store vector embeddings 
+--  &#39;lakeside&#39; right in the Iceberg table
+ALTER TABLE diary_entries 
+  ADD COLUMN entry_text_embeddings array(double);</code></pre>
+<h2 is-upgraded><strong>Generate &amp; persist the embeddings</strong></h2>
+<p>Now we can leverage <a href="https://docs.starburst.io/starburst-galaxy/ai-workflows/ai-functions.html#embedding-function" target="_blank"><code>generate_embeddings()</code></a> to create the vector embeddings and then just store them into the new column.</p>
+<pre><code>-- create and persist the embeddings
+UPDATE diary_entries
+   SET entry_text_embeddings = 
+         starburst.ai.generate_embedding(
+             entry_text, &#39;ai_functions_embedding&#39;
+         )
+ WHERE entry_text_embeddings IS NULL;
+select * from diary_entries;</code></pre>
+<p class="image-container"><img style="width: 2000.00px" src="img/e58b82895cb05150.png"></p>
+<h2 is-upgraded><strong>Investigating the embeddings</strong></h2>
+<p>Taking a deeper look into one of the <code>entry_text_embeddings</code> column&#39;s values, you&#39;ll notice this is just a very long array of numbers ranging from -1 to 1. Again, the video at the top of this step attempts to give a very high-level understanding of what these are representing.</p>
+<p class="image-container"><img style="width: 984.00px" src="img/ecb71a00f93729bb.png"></p>
+<p>In a nutshell, this array of values from -1 to 1 is a multi-dimensional mathematical representation of the contents in the corresponding <code>entry_text</code> column for each row. These can be used in our RAG workflow in the next step when trying to find chunks of text (journal entries in our case) that are similar to a request that will be asked about Fred Flintstone.</p>
+<h2 is-upgraded><strong>An interesting approach</strong></h2>
+<p>It is worth noticing 2 cool things we just did.</p>
+<ol type="1" start="1">
+<li>We used SQL to interact with an AI model to generate vector embeddings!</li>
+<li>We didn&#39;t need a separate vector database to store those embeddings!! We stored them &#34;<strong>lakeside</strong>&#34; to use the phrase coined by <a href="https://www.starburst.io/blog/lakeside-ai/" target="_blank">Starburst</a>.</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="RAG workflow" duration="4">
+        <p>Now that we have our data prepared, we can focus on the SQL-based RAG workflow we are interested in.</p>
+<h2 is-upgraded><strong>The &#34;R&#34;</strong></h2>
+<p>RAG starts with &#34;R&#34; so let&#39;s see if we can use Starburst&#39;s AI functions to <strong>RETRIEVE</strong> journal entries that align with the earlier use case description.</p>
+<pre><code>-- Retrieve the top 5 most relevant journal
+--  entries based on semantic similarity
+WITH vector_search AS(
+    SELECT
+        owner, entry_date, entry_text,
+        cosine_similarity(
+            starburst.ai.generate_embedding(
+                &#39;Does Fred Flintstone like to send and receive mail?&#39;, 
+                &#39;ai_functions_embedding&#39;
+            ),
+            entry_text_embeddings
+        ) AS similarity_score
+    FROM diary_entries
+    ORDER BY similarity_score DESC
+    LIMIT 5
+)
+SELECT * FROM vector_search;</code></pre>
+<p>Notice that the <code>entry_text</code> values below with the highest <code>similarity_score</code> values reference postcards. Our question didn&#39;t mention postcards specifically, but that&#39;s the power of similarity searching based on embeddings, not just a simple <a href="https://www.w3schools.com/sql/sql_like.asp" target="_blank"><code>LIKE</code></a> operator. The <a href="https://trino.io/docs/current/functions/math.html#cosine_similarity" target="_blank"><code>cosine_similarity()</code></a> function already existed in Trino.</p>
+<p class="image-container"><img style="width: 2048.00px" src="img/b0a085933a1d96ef.png"></p>
+<h2 is-upgraded><strong>Prep for the &#34;A&#34;</strong></h2>
+<p>Let&#39;s get ready for the <strong>AUGMENTATION</strong> bit of RAG by preparing the journal entries into a JSON collection that the LLM will more easily consume. We are just creating a second <a href="https://www.atlassian.com/data/sql/using-common-table-expressions" target="_blank">Common Table Expression</a> (CTE) that leverages some more existing Trino functions.</p>
+<pre><code>-- Retrieve the top 5 most relevant journal
+--  entries based on semantic similarity
+WITH vector_search AS(
+    SELECT
+        owner, entry_date, entry_text,
+        cosine_similarity(
+            starburst.ai.generate_embedding(
+                &#39;Does Fred Flintstone like to send and receive mail?&#39;, 
+                &#39;ai_functions_embedding&#39;
+            ),
+            entry_text_embeddings
+        ) AS similarity_score
+    FROM diary_entries
+    ORDER BY similarity_score DESC
+    LIMIT 5
+),
+-- Augment the results by converting  
+--  them into a JSON object
+json_results AS (
+SELECT CAST(map_agg(to_iso8601(entry_date), json_object(
+    key &#39;journal entry date&#39; VALUE entry_date,
+    key &#39;journal entry text&#39; VALUE entry_text)) AS JSON) AS json_data
+FROM
+    vector_search
+)
+SELECT * FROM json_results;</code></pre>
+<p class="image-container"><img style="width: 1140.00px" src="img/8e3d306962ede4aa.png"></p>
+<p>That looks like a bunch of <a href="https://www.merriam-webster.com/dictionary/gobbledygook" target="_blank">gobbledygook</a>, but if you format it in your favorite editor it looks a bit more understandable.  </p>
+<pre><code>{
+    &#34;2025-08-28T22:42:53.688000&#34;: &#34;{\&#34;journal entry date\&#34;:\&#34;2025-08-28 22:42:53.688000\&#34;,\&#34;journal entry text\&#34;:\&#34;It is a new year and today I decided to start keeping a diary. Some may imagine that life is pretty boring here in Bedrock, but my family and friends make sure life is NEVER boring! As today is a Monday, I&#39;m off to work at the quarry. I work there everyday until 5pm. Despite it being physical work, I do enjoy it. I was happy to play with Dino after work.\&#34;}&#34;,
+    &#34;2025-09-01T22:42:53.688000&#34;: &#34;{\&#34;journal entry date\&#34;:\&#34;2025-09-01 22:42:53.688000\&#34;,\&#34;journal entry text\&#34;:\&#34;I have decided to try sending &amp; receiving postcards as a new hobby. I found this website called Postcrossings that looks pretty interesting. The site says that over 800,000 people enjoy this hobby. Postcrossers, that&#39;s what these hobbyists are called, have sent over 78 million postcards so far.\&#34;}&#34;,
+    &#34;2025-09-02T22:42:53.688000&#34;: &#34;{\&#34;journal entry date\&#34;:\&#34;2025-09-02 22:42:53.688000\&#34;,\&#34;journal entry text\&#34;:\&#34;I was able to send 3 postcards today to people the system provided addresses to me for. This really is the hobby for me.\&#34;}&#34;,
+    &#34;2025-09-03T22:42:53.688000&#34;: &#34;{\&#34;journal entry date\&#34;:\&#34;2025-09-03 22:42:53.688000\&#34;,\&#34;journal entry text\&#34;:\&#34;Fun Thursday night getting 2 more postcards in the mail.     I am loving this hobby even though Wilma thinks I&#39;m nuts.\&#34;}&#34;,
+    &#34;2025-09-09T22:42:53.688000&#34;: &#34;{\&#34;journal entry date\&#34;:\&#34;2025-09-09 22:42:53.688000\&#34;,\&#34;journal entry text\&#34;:\&#34;These last days have been a complete blur. So busy just life that I haven&#39;t been able to focus on my new hobby of mailing postcards.\&#34;}&#34;
+}</code></pre>
+<h2 is-upgraded><strong>The &#34;AG&#34;</strong></h2>
+<p>Finally, you can use the <code>json_results</code> CTE generated from the last step to <strong>AUGMENT</strong> our <code>prompt()</code> function call to <strong>GENERATE</strong> a more appropriate answer.  </p>
+<pre><code>-- Retrieve the top 5 most relevant journal
+--  entries based on semantic similarity
+WITH vector_search AS(
+    SELECT
+        owner, entry_date, entry_text,
+        cosine_similarity(
+            starburst.ai.generate_embedding(
+                &#39;Does Fred Flintstone like to send and receive mail?&#39;, 
+                &#39;ai_functions_embedding&#39;
+            ),
+            entry_text_embeddings
+        ) AS similarity_score
+    FROM diary_entries
+    ORDER BY similarity_score DESC
+    LIMIT 5
+),
+-- Augment the results by converting  
+--  them into a JSON object
+json_results AS (
+SELECT CAST(map_agg(to_iso8601(entry_date), json_object(
+    key &#39;journal entry date&#39; VALUE entry_date,
+    key &#39;journal entry text&#39; VALUE entry_text)) AS JSON) AS json_data
+FROM
+    vector_search
+)
+-- Generate an augmented response 
+--  using the LLM
+SELECT
+    starburst.ai.prompt(concat(
+        &#39;Using the list of journal entries provided in JSON, &#39;,
+        &#39;Does Fred Flintstone like to send and receive mail?&#39;,
+        json_format(json_data)), &#39;ai_functions_gpt5&#39;)
+FROM json_results;</code></pre>
+<p>Check out the results this time!!</p>
+<p class="image-container"><img style="width: 1248.00px" src="img/f0686b474cfac863.png"></p>
+<p>I thought he did!</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Ask more questions" duration="5">
+        <p>Let&#39;s try asking some more questions with the simple <code>SELECT</code> statement leveraging <code>prompt()</code> as well as the more lengthy RAG workflow statement using CTEs.  </p>
+<h2 is-upgraded><strong>Question</strong></h2>
+<p><strong>How does Fred Flintstone feel about public transportation?</strong></p>
+<h3 is-upgraded>Base LLM response</h3>
+<p class="image-container"><img style="width: 1116.00px" src="img/cde744bab3768fb1.png"></p>
+<h3 is-upgraded>Enhanced RAG response</h3>
+<p class="image-container"><img style="width: 1110.00px" src="img/fa9744839a890545.png"></p>
+<h2 is-upgraded><strong>Question</strong></h2>
+<p><strong>What hobbies or activities is Fred Flintstone interested in?</strong></p>
+<h3 is-upgraded>Base LLM response</h3>
+<p class="image-container"><img style="width: 1116.00px" src="img/d7f7eaadb20a7cb4.png"></p>
+<h3 is-upgraded>Enhanced RAG response</h3>
+<p class="image-container"><img style="width: 1118.00px" src="img/89466aea0da46367.png"></p>
+<p><em>Better prompt engineering would merge these answers together in the RAG response.</em></p>
+<h2 is-upgraded><strong>Question</strong></h2>
+<p><strong>How often does Fred Flintstone go to the movies?</strong></p>
+<h3 is-upgraded>Base LLM response</h3>
+<p class="image-container"><img style="width: 1112.00px" src="img/31186af0992bd345.png"></p>
+<p><em>It is kind of funny that the </em><a href="https://www.youtube.com/watch?v=2s13X66BFd8" target="_blank"><em>animated theme song</em></a><em> does show him going to the movies!</em></p>
+<h3 is-upgraded>Enhanced RAG response</h3>
+<p class="image-container"><img style="width: 1216.00px" src="img/f7ac004c19e8598a.png"></p>
+<h2 is-upgraded><strong>How did it go?</strong></h2>
+<p>It is fair to say that even with this very primitive RAG workflow (again, written using SQL!), the responses are better after being augmented with non-public information.</p>
+<aside class="warning"><p><strong>Caution:</strong> Do not create a journal application that you will then read all the private thoughts from your customers. They will NOT appreciate it! Like with most things... just because you CAN do something, it doesn&#39;t mean you SHOULD do it. </p>
+<p><em>Thanks for attending my TED Talk on the importance of private user data.</em> ;)</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Environment tear-down" duration="2">
+        <aside class="special"><p><strong>Note:</strong> This section assumes you created a catalog named <code>tmp_cat</code> as described in <a href="https://devcenter.starburst.io/tutorials/configure-a-starburst-galaxy-data-lake-catalog-and-schema" target="_blank">Configure a Starburst Galaxy data lake catalog and schema</a>. The first section of that tutorial states the following.</p>
+<p><em>All data contained in the S3 bucket used in this tutorial is deleted every 24 hours. For this reason, we recommend deleting the catalog after you have finished using it for the day. You can recreate the catalog on another day if needed.</em></p>
+<p><strong><em>If you have a different configuration than described above, you can skip this entire section. </em></strong></p>
+</aside>
+<h2 is-upgraded><strong>Delete the schema</strong></h2>
+<p>Run the following SQL to remove the schema and all the objects within it. This will also clear up the object store files that were created during this tutorial.</p>
+<pre><code>DROP SCHEMA ai_functions CASCADE;</code></pre>
+<h2 is-upgraded><strong>Update the cluster</strong></h2>
+<p>Click on <strong>Admin</strong> &gt; <strong>Clusters</strong> from the left nav.</p>
+<p class="image-container"><img style="width: 293.47px" src="img/9480b4a56ebc474f.png"></p>
+<p>Find the <code>aws-us-east-1-free</code> cluster in the presented list and click on the vertical ellipsis menu icon on the far right of this row. In the menu that surfaces, click on <strong>Edit cluster</strong>. </p>
+<p class="image-container"><img style="width: 1850.00px" src="img/fc30d7fa4e049947.png"></p>
+<p>In the <strong>Edit cluster</strong> configuration screen, click on the <strong>Catalogs</strong> pulldown menu.</p>
+<p class="image-container"><img style="width: 447.99px" src="img/5232a5a573d6e7ca.png"></p>
+<p>Uncheck the box on the for the <code>tmp_cat (us-east-1)</code> item in the list that surfaces, then click on <strong>Save changes</strong>.</p>
+<p class="image-container"><img style="width: 2048.00px" src="img/d58b6ee7f49aaaf9.png"></p>
+<h2 is-upgraded><strong>Remove the catalog</strong></h2>
+<p>Navigate to <strong>Data</strong> &gt; <strong>Catalogs</strong> from the left nav to see the list of <strong>Catalogs</strong>. Type <code>tmp_cat</code> in the search box to trim the list to only this catalog. Click on the cluster name link.</p>
+<p class="image-container"><img style="width: 1750.00px" src="img/4ed2c1de883d4a62.png"></p>
+<p>Click on the vertical ellipsis menu icon and choose <strong>Delete catalog</strong>.</p>
+<p class="image-container"><img style="width: 1764.00px" src="img/f82e4ef2e99923e4.png"></p>
+<p>Follow the on-screen instructions to enable, and click, the <strong>Yes, delete</strong> button.</p>
+<p class="image-container"><img style="width: 567.50px" src="img/ed7c33b22d1d7731.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Tutorial wrap-up" duration="1">
+        <p>Congratulations, you&#39;ve completed the <strong>Utilizing SQL-based AI functions with Starburst </strong>tutorial!</p>
+<h2 is-upgraded><strong>What you </strong><strong>learned</strong></h2>
+<ul>
+<li>How to configure LLM and embedding AI models in the Starburst UI.</li>
+<li>How to use AI task functions for sentiment analysis, classification, grammar correction, text masking, and translation needs.</li>
+<li>How to leverage the AI embedding function to create vector embeddings from text.</li>
+<li>How to alter an Iceberg table to store vector embeddings within.</li>
+<li>How to build a simple RAG workflow leveraging Iceberg tables and Starburst AI functions.</li>
+</ul>
+<h2 is-upgraded><strong>What&#39;s next?</strong></h2>
+<p>Check out some of these codelabs...</p>
+<ul>
+<li><a href="https://devcenter.starburst.io/tutorials/create-and-populate-apache-iceberg-tables" target="_blank">Create and populate Iceberg tables</a></li>
+<li><a href="https://devcenter.starburst.io/tutorials/explore-data-modifications-snapshots-and-time-travel-with-apache-iceberg" target="_blank">Explore data modifications, snapshots, and time travel with Apache Iceberg</a></li>
+<li><a href="https://devcenter.starburst.io/tutorials/explore-advanced-features-of-apache-iceberg" target="_blank">Explore advanced features of Apache Iceberg</a> </li>
+</ul>
+<h2 is-upgraded><strong>Further reading</strong></h2>
+<ul>
+<li><a href="https://www.starburst.io/blog/lakeside-ai/" target="_blank">What is Lakeside AI? | Starburst</a>  </li>
+<li><a href="https://www.starburst.io/blog/starburst-enterprise-ai-iceberg-release-477/" target="_blank">Starburst Enterprise Connects AI and Iceberg Functionality</a> </li>
+<li><a href="https://www.starburst.io/blog/how-starburst-galaxy-helps-unblock-ai-projects/" target="_blank">How Starburst Galaxy Helps Unblock AI Projects</a></li>
+<li><a href="https://www.starburst.io/blog/starburst-using-starburst/" target="_blank">My Journey with Starburst AI Tools</a>  </li>
+</ul>
+<h2 is-upgraded><strong>Reference docs</strong></h2>
+<ul>
+<li><a href="https://docs.starburst.io/starburst-galaxy/ai-workflows/configure-models.html" target="_blank">Starburst | Configure models</a> </li>
+<li><a href="https://docs.starburst.io/starburst-galaxy/ai-workflows/ai-functions.html" target="_blank">Starburst | AI functions</a> </li>
+<li><a href="https://docs.starburst.io/starburst-galaxy/ai-workflows/ai-privileges.html" target="_blank">Starburst | AI model privilege</a> </li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
