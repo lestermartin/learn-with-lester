@@ -1,6 +1,7 @@
 /* handles the search box in the tutorials list */
 
 const listedTutorialIds = [
+	"starbust-ai-functions",
 	"flow-dev-intro",
 	"trino-udf-java-scalar",
 	"trino-iceberg-v3"
